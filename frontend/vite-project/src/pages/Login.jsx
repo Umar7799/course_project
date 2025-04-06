@@ -1,29 +1,29 @@
-import { useState } from "react";
-import { useAuth } from "./context/useAuth";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 const Login = () => {
   const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Mock user authentication
-    if (email === "user@example.com" && password === "password") {
-      login({ email });
-      navigate("/dashboard"); // Redirect after login
-    } else {
-      setError("Invalid email or password");
+    setError('');
+    try {
+      await login(email, password);
+      navigate('/dashboard'); // Redirect after successful login
+    } catch (err) {
+        console.log(err)
+      setError('Invalid credentials');
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2>Login</h2>
+    <div className="container mt-5" style={{ maxWidth: '500px' }}>
+      <h2 className="mb-4 text-center">Login</h2>
       {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
@@ -34,6 +34,7 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            placeholder="you@example.com"
           />
         </div>
         <div className="mb-3">
@@ -44,11 +45,10 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            placeholder="Enter your password"
           />
         </div>
-        <button type="submit" className="btn btn-primary">
-          Login
-        </button>
+        <button type="submit" className="btn btn-primary w-100">Login</button>
       </form>
     </div>
   );

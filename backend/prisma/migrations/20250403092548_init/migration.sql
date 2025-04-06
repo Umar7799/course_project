@@ -6,7 +6,7 @@ CREATE TYPE "QuestionType" AS ENUM ('SINGLE_LINE', 'MULTI_LINE', 'INTEGER', 'CHE
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
@@ -17,42 +17,42 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Template" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "public" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "authorId" TEXT NOT NULL,
+    "authorId" INTEGER NOT NULL,
 
     CONSTRAINT "Template_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Question" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "text" TEXT NOT NULL,
     "type" "QuestionType" NOT NULL,
-    "templateId" TEXT NOT NULL,
+    "templateId" INTEGER NOT NULL,
 
     CONSTRAINT "Question_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Form" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "userId" TEXT NOT NULL,
-    "templateId" TEXT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "templateId" INTEGER NOT NULL,
 
     CONSTRAINT "Form_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Answer" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "response" TEXT NOT NULL,
-    "questionId" TEXT NOT NULL,
-    "formId" TEXT NOT NULL,
+    "questionId" INTEGER NOT NULL,
+    "formId" INTEGER NOT NULL,
 
     CONSTRAINT "Answer_pkey" PRIMARY KEY ("id")
 );

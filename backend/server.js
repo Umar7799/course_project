@@ -1,21 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const dotenv = require('dotenv');
-const authRoutes = require("./routes/authRoutes"); // Import auth routes
 
-dotenv.config();
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
+
+// ✅ Middleware order matters!
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // 👈 Ensure JSON body parsing
+app.use(express.urlencoded({ extended: true })); // 👈 Ensure form parsing
 
-// Use the authentication routes
+// ✅ Authentication routes
 app.use("/auth", authRoutes);
-
-
-
-
 
 app.get("/", (req, res) => {
     res.send("Hello, World! 🚀");

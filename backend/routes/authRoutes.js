@@ -1,5 +1,3 @@
-// authRoutes.js
-
 const { Router } = require('express');
 const bcrypt = require('bcryptjs');
 const prisma = require('../prisma/client');
@@ -21,13 +19,19 @@ router.post('/signup', async (req, res) => {
 
     try {
         const user = await prisma.user.create({
-            data: { name, email, password: hashedPassword },
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: 'USER' // Default role is USER
+            },
         });
 
         return res.status(201).json({
             id: user.id,
             name: user.name,
             email: user.email,
+            role: user.role
         });
     } catch (error) {
         console.error(error);
@@ -51,7 +55,7 @@ router.post('/login', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role }, // Include role in the token
+            { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
@@ -64,11 +68,11 @@ router.post('/login', async (req, res) => {
 });
 
 // Get Authenticated User Profile
-router.get('/profile', authMiddleware('USER'), async (req, res) => {
+router.get('/profile', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: req.user.id },
-            select: { id: true, name: true, email: true } // Exclude password
+            select: { id: true, name: true, email: true }
         });
 
         if (!user) {
@@ -85,7 +89,7 @@ router.get('/profile', authMiddleware('USER'), async (req, res) => {
 router.get('/users', authMiddleware('ADMIN'), async (req, res) => {
     try {
         const users = await prisma.user.findMany({
-            select: { id: true, name: true, email: true } // Exclude passwords
+            select: { id: true, name: true, email: true }
         });
 
         return res.json(users);
@@ -95,65 +99,42 @@ router.get('/users', authMiddleware('ADMIN'), async (req, res) => {
     }
 });
 
-
-// Create Template (Only accessible by admins)
-router.post('/templates', authMiddleware('ADMIN'), async (req, res) => {
-    const { title, description, public } = req.body;
-
+// Route for Admins to Promote Users
+router.put('/promote/:userId', authMiddleware('ADMIN'), async (req, res) => {
     try {
-        const template = await prisma.template.create({
-            data: {
-                title,
-                description,
-                public,
-                authorId: req.user.id // The logged-in user is the author
-            }
+        // Log the admin trying to promote a user
+        console.log("Admin trying to promote user:", req.user);  // Debug log
+
+        const userId = parseInt(req.params.userId, 10);  // Parse user ID from URL param
+        console.log("User ID to promote:", userId);  // Debug log
+
+        // Find the user to be promoted using Prisma
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
         });
 
-        return res.status(201).json(template);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Something went wrong' });
-    }
-});
-
-// Get All Templates (Public and Private, accessible by everyone)
-router.get('/templates', async (req, res) => {
-    try {
-        const templates = await prisma.template.findMany({
-            where: { public: true }, // Only public templates are returned
-            select: { id: true, title: true, description: true, createdAt: true }
-        });
-
-        return res.json(templates);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Something went wrong' });
-    }
-});
-
-// Get Template by ID (Public templates are accessible by everyone)
-router.get('/templates/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const template = await prisma.template.findUnique({
-            where: { id },
-            select: { id: true, title: true, description: true, public: true, createdAt: true }
-        });
-
-        if (!template) {
-            return res.status(404).json({ error: 'Template not found' });
+        // If the user does not exist, return an error
+        if (!user) {
+            console.log("User not found.");  // Debug log
+            return res.status(404).json({ error: 'User not found' });
         }
 
-        // Allow access to public templates, or templates owned by the logged-in user
-        if (template.public || (req.user && req.user.id === template.authorId)) {
-            return res.json(template);
-        } else {
-            return res.status(403).json({ error: 'Forbidden' });
+        // Check if the user is already an admin (to prevent redundant promotion)
+        if (user.role === 'ADMIN') {
+            return res.status(400).json({ error: 'User is already an admin' });
         }
+
+        // Update the user role to ADMIN
+        await prisma.user.update({
+            where: { id: userId },
+            data: { role: 'ADMIN' },
+        });
+
+        // Log success and return response
+        console.log("User promoted successfully!");  // Debug log
+        return res.json({ message: 'User has been promoted to ADMIN' });
     } catch (error) {
-        console.error(error);
+        console.error("Error promoting user:", error);  // Log any errors that occur
         return res.status(500).json({ error: 'Something went wrong' });
     }
 });
