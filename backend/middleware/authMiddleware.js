@@ -1,33 +1,27 @@
 const jwt = require('jsonwebtoken');
 
 // Middleware for authenticating users and checking roles (optional)
-const authMiddleware = (requiredRole) => (req, res, next) => {
-    // Check if authorization header exists
+// Updated authMiddleware to support multiple roles
+const authMiddleware = (...requiredRoles) => (req, res, next) => {
     if (!req.headers || !req.headers.authorization) {
         return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
     let token = req.headers.authorization;
     if (token.startsWith('Bearer ')) {
-        token = token.slice(7).trim();  // Remove 'Bearer ' part
+        token = token.slice(7).trim();
     }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;  // Attach decoded info to request
+        req.user = decoded;
 
-        // ✅ Allow either USER or ADMIN if role is USER
-        if (requiredRole === 'USER' && !['USER', 'ADMIN'].includes(req.user.role)) {
-            return res.status(403).json({ error: 'Forbidden. You do not have the required role.' });
+        // Check role access
+        if (requiredRoles.length && !requiredRoles.includes(req.user.role)) {
+            return res.status(403).json({ error: 'Forbidden. Insufficient privileges.' });
         }
 
-        // 🔒 Strict check for ADMIN-only routes
-        if (requiredRole === 'ADMIN' && req.user.role !== 'ADMIN') {
-            return res.status(403).json({ error: 'Forbidden. Admins only.' });
-        }
-
-        console.log("User authorized:", req.user); // Debug
-        next(); // Proceed
+        next();
     } catch (error) {
         console.error("JWT Error:", error);
         if (error.name === 'TokenExpiredError') {
@@ -36,5 +30,6 @@ const authMiddleware = (requiredRole) => (req, res, next) => {
         return res.status(401).json({ error: 'Invalid token. Authorization denied.' });
     }
 };
+
 
 module.exports = authMiddleware;

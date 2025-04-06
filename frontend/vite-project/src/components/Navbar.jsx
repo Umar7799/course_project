@@ -1,3 +1,4 @@
+// src/components/Navbar.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
@@ -12,6 +13,9 @@ const Navbar = () => {
         <ul className="navbar-nav ml-auto">
           <li className="nav-item">
             <Link className="nav-link" to="/">Home</Link>
+          </li>
+          <li className="nav-item">
+            <Link className="nav-link" to="/templates">Templates</Link> {/* Link to Templates page */}
           </li>
           {!user ? (
             <>
