@@ -57,7 +57,13 @@ router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
         // If the user is an admin, show all templates
         if (userRole === 'ADMIN') {
             const templates = await prisma.template.findMany({
-                select: { id: true, title: true, description: true, createdAt: true },
+                select: { 
+                    id: true, 
+                    title: true, 
+                    description: true, 
+                    createdAt: true,
+                    isPublic: true // ✅ Include this!
+                },
             });
             return res.json(templates);
         }
@@ -71,7 +77,13 @@ router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
                         { authorId: userId }, // Templates created by the logged-in user (private templates)
                     ],
                 },
-                select: { id: true, title: true, description: true, createdAt: true },
+                select: { 
+                    id: true, 
+                    title: true, 
+                    description: true, 
+                    createdAt: true,
+                    isPublic: true // ✅ Include this!
+                },
             });
             return res.json(templates);
         }
@@ -79,7 +91,13 @@ router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
         // Fallback: Only public templates are shown if not admin or creator
         const templates = await prisma.template.findMany({
             where: { isPublic: true },
-            select: { id: true, title: true, description: true, createdAt: true },
+            select: { 
+                id: true, 
+                title: true, 
+                description: true, 
+                createdAt: true,
+                isPublic: true // ✅ Include this!
+            },
         });
 
         return res.json(templates);
@@ -88,6 +106,7 @@ router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
         return res.status(500).json({ error: 'Something went wrong' });
     }
 });
+
 
 
 

@@ -7,33 +7,39 @@ const TemplatesPage = () => {
   const [loading, setLoading] = useState(true); // Track loading state
   const [error, setError] = useState(null); // Track error state
 
-  // Fetch templates from the backend
   useEffect(() => {
     const fetchTemplates = async () => {
-      const token = localStorage.getItem('token');  // Retrieve the token from localStorage
-      console.log('Sending token:', token);  // Log token for debugging
-
+      const token = localStorage.getItem('token');
+      console.log('Sending token:', token);
+  
+      if (!token) {
+        setError('No token found. Please log in.');
+        setLoading(false);
+        return;
+      }
+  
       try {
         const response = await axios.get('http://localhost:5000/auth/templates', {
           headers: {
-            Authorization: `Bearer ${token}`  // Send token in Authorization header
+            Authorization: `Bearer ${token}`
           }
         });
-
-        // Log the response for debugging
+  
         console.log('Response data:', response.data);
-
-        // Get the user role from the token (you can decode the JWT here or store it)
-        const userRole = JSON.parse(atob(token.split('.')[1])).role; // Assuming role is part of the token
-
-        // Filter templates based on the role and visibility
+  
+        // Decode user role
+        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        const userRole = decodedToken.role;
+        console.log('User Role:', userRole);
+  
+        // ✅ Filter templates based on role
         const filteredTemplates = response.data.filter(template => {
-          if (userRole === 'ADMIN') {
-            return true;  // Admin can see all templates
-          }
-          return template.isPublic;  // Regular users only see public templates
+          console.log('Template:', template);
+          return userRole === 'ADMIN' || template.isPublic === true;
         });
-
+  
+        console.log('Filtered Templates:', filteredTemplates);
+  
         setTemplates(filteredTemplates);
         setLoading(false);
       } catch (error) {
@@ -42,9 +48,10 @@ const TemplatesPage = () => {
         setLoading(false);
       }
     };
-
+  
     fetchTemplates();
   }, []);
+  
 
   if (loading) {
     return <div>Loading templates...</div>; // Show loading message while fetching data
@@ -58,6 +65,9 @@ const TemplatesPage = () => {
     <div className="container mt-5">
       <h2>Templates</h2>
       <div className="list-group">
+        {/* Log the length of templates to verify */}
+        {console.log('Templates length:', templates.length)}
+
         {templates && templates.length > 0 ? (
           templates.map((template) => (
             <Link
