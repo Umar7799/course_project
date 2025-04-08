@@ -5,7 +5,7 @@ const CreateTemplatePage = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [topic, setTopic] = useState('');
+  const [topic, setTopic] = useState(''); // Track topic
   const [tags, setTags] = useState('');
   const [image, setImage] = useState('');
   const [publicStatus, setPublicStatus] = useState(false);
@@ -18,7 +18,7 @@ const CreateTemplatePage = () => {
     const newTemplate = {
       title,
       description,
-      topic,
+      topic,  // Send topic with the request
       tags: tags.split(',').map(tag => tag.trim()),  // Convert tags to an array
       image,
       public: publicStatus,
@@ -73,6 +73,7 @@ const CreateTemplatePage = () => {
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
+            placeholder="Enter topic"
           />
         </div>
         <div>

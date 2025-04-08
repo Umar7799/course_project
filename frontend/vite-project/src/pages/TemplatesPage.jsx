@@ -6,11 +6,12 @@ const TemplatesPage = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true); // Track loading state
   const [error, setError] = useState(null); // Track error state
+  const [selectedTopic, setSelectedTopic] = useState(''); // Track selected topic
+  const [topics, setTopics] = useState([]); // Store the available topics
 
   useEffect(() => {
     const fetchTemplates = async () => {
       const token = localStorage.getItem('token');
-      console.log('Sending token:', token);
   
       if (!token) {
         setError('No token found. Please log in.');
@@ -25,20 +26,19 @@ const TemplatesPage = () => {
           }
         });
   
-        console.log('Response data:', response.data);
-  
         // Decode user role
         const decodedToken = JSON.parse(atob(token.split('.')[1]));
         const userRole = decodedToken.role;
-        console.log('User Role:', userRole);
   
-        // ✅ Filter templates based on role
+        // Get unique topics from the templates
+        const topicsSet = new Set(response.data.map(template => template.topic));
+        setTopics([...topicsSet]);
+
+        // Filter templates based on role and selected topic
         const filteredTemplates = response.data.filter(template => {
-          console.log('Template:', template);
-          return userRole === 'ADMIN' || template.isPublic === true;
+          const topicMatch = selectedTopic ? template.topic === selectedTopic : true;
+          return (userRole === 'ADMIN' || template.isPublic === true) && topicMatch;
         });
-  
-        console.log('Filtered Templates:', filteredTemplates);
   
         setTemplates(filteredTemplates);
         setLoading(false);
@@ -48,10 +48,9 @@ const TemplatesPage = () => {
         setLoading(false);
       }
     };
-  
+
     fetchTemplates();
-  }, []);
-  
+  }, [selectedTopic]); // Re-fetch templates whenever selectedTopic changes
 
   if (loading) {
     return <div>Loading templates...</div>; // Show loading message while fetching data
@@ -64,10 +63,24 @@ const TemplatesPage = () => {
   return (
     <div className="container mt-5">
       <h2>Templates</h2>
+      
+      {/* Topic Filter */}
+      <div className="mb-3">
+        <label htmlFor="topicSelect" className="form-label">Filter by Topic</label>
+        <select
+          id="topicSelect"
+          className="form-select"
+          value={selectedTopic}
+          onChange={(e) => setSelectedTopic(e.target.value)}
+        >
+          <option value="">All Topics</option>
+          {topics.map((topic, index) => (
+            <option key={index} value={topic}>{topic}</option>
+          ))}
+        </select>
+      </div>
+      
       <div className="list-group">
-        {/* Log the length of templates to verify */}
-        {console.log('Templates length:', templates.length)}
-
         {templates && templates.length > 0 ? (
           templates.map((template) => (
             <Link

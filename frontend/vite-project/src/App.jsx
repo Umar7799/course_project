@@ -11,6 +11,7 @@ import TemplateDetailPage from './pages/TemplateDetailPage';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';  // Import ProtectedRoute
 import CreateTemplate from './pages/CreateTemplate';
+import AddQuestionForm from './pages/AddQuestionsForm';
 
 const App = () => {
   return (
