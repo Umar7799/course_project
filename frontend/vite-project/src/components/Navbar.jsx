@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
@@ -17,6 +16,17 @@ const Navbar = () => {
           <li className="nav-item">
             <Link className="nav-link" to="/templates">Templates</Link> {/* Link to Templates page */}
           </li>
+          <li className="nav-item">
+            <Link className="nav-link" to="/createTemplate">Create template</Link> {/* Link to Templates page */}
+          </li>
+          
+          {/* Role-based navigation */}
+          {user && user.role === 'admin' && (
+            <li className="nav-item">
+              <Link className="nav-link" to="/dashboard">Dashboard</Link> {/* Only visible to admin */}
+            </li>
+          )}
+          
           {!user ? (
             <>
               <li className="nav-item">

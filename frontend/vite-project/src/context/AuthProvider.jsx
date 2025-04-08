@@ -30,7 +30,12 @@ export const AuthProvider = ({ children }) => {
         });
 
         const profile = await profileRes.json();
-        setUser(profile);
+
+        // Store user with role included
+        setUser({
+            ...profile,
+            role: profile.role || 'user', // Default role is 'user' if not set
+        });
     };
 
     const logout = () => {
@@ -51,12 +56,17 @@ export const AuthProvider = ({ children }) => {
 
             if (res.ok) {
                 const profile = await res.json();
-                setUser(profile);
+
+                // Ensure role is included when fetching the profile
+                setUser({
+                    ...profile,
+                    role: profile.role || 'user', // Default role to 'user' if not found
+                });
             } else {
                 logout();
             }
         } catch (err) {
-            console.log(err)
+            console.log(err);
             logout();
         }
     }, []);

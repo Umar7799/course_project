@@ -8,37 +8,35 @@ const router = Router();
 
 
 // Answer route
-router.post('/forms/submit', authMiddleware('USER'), async (req, res) => {
+router.post('/forms/submit', authMiddleware(), async (req, res) => {
     const { templateId, answers } = req.body;
-
-    if (!templateId || !Array.isArray(answers) || answers.length === 0) {
-        return res.status(400).json({ error: 'Template ID and answers are required' });
+    const userId = req.user.id;
+  
+    if (!templateId || !answers || answers.length === 0) {
+      return res.status(400).json({ error: 'Template ID and answers are required' });
     }
-
+  
     try {
-        // 1. Create the form linked to the user and template
-        const newForm = await prisma.form.create({
-            data: {
-                userId: req.user.id,
-                templateId: parseInt(templateId, 10),
-            }
-        });
-
-        // 2. Create all answers
-        const answerData = answers.map((ans) => ({
-            response: ans.response,
-            questionId: ans.questionId,
-            formId: newForm.id,
-        }));
-
-        await prisma.answer.createMany({ data: answerData });
-
-        return res.status(201).json({ message: 'Form submitted successfully' });
+      // Create a new form entry
+      const newForm = await prisma.form.create({
+        data: {
+          userId,
+          templateId,
+          answers: {
+            create: answers.map(answer => ({
+              questionId: answer.questionId,
+              response: answer.response,
+            })),
+          },
+        },
+      });
+  
+      return res.status(201).json({ message: 'Form submitted successfully', form: newForm });
     } catch (error) {
-        console.error("❌ Error submitting form:", error);
-        return res.status(500).json({ error: 'Something went wrong while submitting the form' });
+      console.error('❌ Error submitting form:', error);
+      return res.status(500).json({ error: 'Something went wrong while submitting the form' });
     }
-});
+  });
 
 
 

@@ -45,12 +45,13 @@ const TemplateDetailPage = () => {
       );
 
       alert('Form submitted successfully!');
-      setAnswers({});
+      setAnswers({}); // Clear answers after submission
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('There was an error submitting the form.');
     }
   };
+
 
   if (!template) {
     return <div>Loading template...</div>;

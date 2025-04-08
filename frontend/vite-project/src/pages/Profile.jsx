@@ -6,7 +6,10 @@ import { useNavigate } from 'react-router-dom';
 const Profile = () => {
   const { user, logout } = useAuth();  // Fetch user from context
   const [profileData, setProfileData] = useState(null);
+  
   const navigate = useNavigate();
+
+
 
   // Fetch user profile data from the backend
   useEffect(() => {

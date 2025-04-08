@@ -19,17 +19,23 @@ model User {
 }
 
 model Template {
-  id          Int  @id @default(autoincrement())
-  title       String      
-  description String      
-  public      Boolean     @default(false)
-  createdAt   DateTime    @default(now())
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  isPublic      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
 
-  authorId    Int  // 👈 Changed from String to Int
-  author      User @relation(fields: [authorId], references: [id])
+  // 🆕 NEW fields:
+  topic       String?           // Optional topic/category
+  tags        String[]          // Tags as string array
+  image       String?           // Optional image URL
+
+  authorId    Int
+  author      User      @relation(fields: [authorId], references: [id])
   questions   Question[]
   forms       Form[]
 }
+
 
 model Question {
   id         Int  @id @default(autoincrement())
