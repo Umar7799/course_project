@@ -7,7 +7,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const router = Router();
 
 // Create Template (Only accessible by admins)
-router.post('/createTemplate', authMiddleware('ADMIN'), async (req, res) => {
+router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     console.log("🔹 Request received to create a template"); // Debug log
 
     const { title, description, isPublic, topic, tags, image } = req.body;  // Destructure new fields
@@ -46,61 +46,63 @@ router.post('/createTemplate', authMiddleware('ADMIN'), async (req, res) => {
 
 // Get All Templates (For admins, creators, and users)
 router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
-    const userId = req.user.id;  // Get user ID from the request (added by the auth middleware)
-    const userRole = req.user.role;  // Get user role (added by auth middleware)
-    const { topic } = req.query;  // Retrieve topic from query string if provided
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    const { topic } = req.query;
 
     try {
-        // Base query object for selecting templates
-        let query = {
+        const query = {
             select: {
                 id: true,
                 title: true,
                 description: true,
                 createdAt: true,
                 isPublic: true,
-                topic: true,  // Include topic in the response
+                topic: true,
+
             },
         };
 
-        // If topic is provided, filter by topic
-        if (topic) {
-            query.where = { topic };
-        }
-
-        // If the user is an admin, show all templates
+        // Admin: get everything, apply topic filter if exists
         if (userRole === 'ADMIN') {
-            const templates = await prisma.template.findMany(query);
-            return res.json(templates);
-        }
-
-        // If the user is the creator, show all templates they created (even non-public ones)
-        if (userRole === 'USER') {
+            const adminWhere = topic ? { topic } : {};
             const templates = await prisma.template.findMany({
-                where: {
-                    OR: [
-                        { isPublic: true },   // Public templates
-                        { authorId: userId }, // Templates created by the logged-in user (private templates)
-                    ],
-                    ...query.where,  // Include topic filter if provided
-                },
+                where: adminWhere,
                 select: query.select,
             });
             return res.json(templates);
         }
 
-        // Fallback: Only public templates are shown if not admin or creator
-        const templates = await prisma.template.findMany({
-            where: { isPublic: true, ...query.where },  // Include topic filter if provided
-            select: query.select,
-        });
+        // Regular user: see public templates + own templates (even if private)
+        if (userRole === 'USER') {
+            const whereClause = {
+                OR: [
+                    { isPublic: true },
+                    { authorId: userId },
+                ],
+            };
 
-        return res.json(templates);
+            if (topic) {
+                whereClause.AND = [{ topic }];
+            }
+
+            const templates = await prisma.template.findMany({
+                where: whereClause,
+                select: query.select,
+            });
+
+            return res.json(templates);
+        }
+
+        // Just in case we somehow fall through
+        return res.status(403).json({ error: 'Unauthorized access' });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'Something went wrong' });
     }
 });
+
 
 // Get a template and its questions
 router.get('/templates/:id/full', async (req, res) => {
@@ -144,8 +146,7 @@ router.get('/templates/:id/full', async (req, res) => {
     }
 });
 
-// Edit Template (Only accessible by admins)
-router.put('/templates/:id', authMiddleware('ADMIN'), async (req, res) => {
+router.put('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const templateId = parseInt(req.params.id, 10);
     const { title, description, isPublic, topic } = req.body;
 
@@ -154,7 +155,6 @@ router.put('/templates/:id', authMiddleware('ADMIN'), async (req, res) => {
     }
 
     try {
-        // Find the template to update
         const template = await prisma.template.findUnique({
             where: { id: templateId },
         });
@@ -163,14 +163,18 @@ router.put('/templates/:id', authMiddleware('ADMIN'), async (req, res) => {
             return res.status(404).json({ error: 'Template not found' });
         }
 
-        // Update the template
+        // Check if user is the owner or an admin
+        if (template.authorId !== req.user.id && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'You are not allowed to edit this template' });
+        }
+
         const updatedTemplate = await prisma.template.update({
             where: { id: templateId },
             data: {
                 title,
                 description,
-                isPublic: isPublic !== undefined ? isPublic : template.isPublic, // Only update isPublic if provided
-                topic,  // Update the topic
+                isPublic: isPublic !== undefined ? isPublic : template.isPublic,
+                topic,
             },
         });
 
@@ -182,12 +186,11 @@ router.put('/templates/:id', authMiddleware('ADMIN'), async (req, res) => {
 });
 
 
-// Delete Template (Only accessible by admins)
-router.delete('/templates/:id', authMiddleware('ADMIN'), async (req, res) => {
+// Toggle template public/private visibility (Author or Admin only)
+router.put('/templates/:id/visibility', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const templateId = parseInt(req.params.id, 10);
 
     try {
-        // Find the template to delete
         const template = await prisma.template.findUnique({
             where: { id: templateId },
         });
@@ -196,7 +199,45 @@ router.delete('/templates/:id', authMiddleware('ADMIN'), async (req, res) => {
             return res.status(404).json({ error: 'Template not found' });
         }
 
-        // Delete the template
+        // Only the author or an admin can toggle visibility
+        if (template.authorId !== req.user.id && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'You are not allowed to modify this template' });
+        }
+
+        const updatedTemplate = await prisma.template.update({
+            where: { id: templateId },
+            data: {
+                isPublic: !template.isPublic,
+            },
+        });
+
+        return res.json({ message: `Template is now ${updatedTemplate.isPublic ? 'Public' : 'Private'}` });
+    } catch (error) {
+        console.error('❌ Error toggling template visibility:', error);
+        return res.status(500).json({ error: 'Failed to change visibility' });
+    }
+});
+
+
+
+
+router.delete('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res) => {
+    const templateId = parseInt(req.params.id, 10);
+
+    try {
+        const template = await prisma.template.findUnique({
+            where: { id: templateId },
+        });
+
+        if (!template) {
+            return res.status(404).json({ error: 'Template not found' });
+        }
+
+        // Only admin or owner can delete
+        if (template.authorId !== req.user.id && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'You are not allowed to delete this template' });
+        }
+
         await prisma.template.delete({
             where: { id: templateId },
         });
@@ -208,135 +249,7 @@ router.delete('/templates/:id', authMiddleware('ADMIN'), async (req, res) => {
     }
 });
 
-// Add a Question to a Template (Admin Only)
-router.post('/templates/:id/questions', authMiddleware('ADMIN'), async (req, res) => {
-    const { text, type } = req.body;
-    const templateId = parseInt(req.params.id, 10);
 
-    console.log("Request Params:", req.params);         // 🔍 Debugging
-    console.log("Parsed Template ID:", templateId);     // 🔍 Debugging
-    console.log("Request Body:", req.body);             // 🔍 Debugging
-
-    // ✅ Validate Template ID
-    if (isNaN(templateId)) {
-        return res.status(400).json({ error: "Invalid template ID in URL." });
-    }
-
-    // ✅ Validate input fields
-    if (!text || !type) {
-        return res.status(400).json({ error: "Text and type are required" });
-    }
-
-    try {
-        // ✅ Check if the template exists
-        const template = await prisma.template.findUnique({ where: { id: templateId } });
-        if (!template) {
-            return res.status(404).json({ error: "Template not found" });
-        }
-
-        // ✅ Create the question
-        const newQuestion = await prisma.question.create({
-            data: {
-                text,
-                type,
-                templateId,
-            },
-        });
-
-        return res.status(201).json({ message: "Question added successfully", question: newQuestion });
-
-    } catch (error) {
-        console.error("Error adding question:", error);
-        return res.status(500).json({ error: "Something went wrong" });
-    }
-});
-
-// Edit a Question (Only accessible by admin or template author)
-router.put('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN'), async (req, res) => {
-    const { text, type } = req.body;
-    const { templateId, questionId } = req.params;
-
-    // Validate input
-    if (!text || !type) {
-        return res.status(400).json({ error: 'Text and type are required' });
-    }
-
-    try {
-        // Find the template to check if the current user is the author
-        const template = await prisma.template.findUnique({
-            where: { id: parseInt(templateId, 10) },
-        });
-
-        if (!template) {
-            return res.status(404).json({ error: 'Template not found' });
-        }
-
-        // Find the question to check its author
-        const question = await prisma.question.findUnique({
-            where: { id: parseInt(questionId, 10) },
-        });
-
-        if (!question) {
-            return res.status(404).json({ error: 'Question not found' });
-        }
-
-        // Ensure the user is either an admin or the author of the question (the author of the template)
-        if (req.user.role !== 'ADMIN' && question.templateId !== template.id) {
-            return res.status(403).json({ error: 'You are not authorized to edit this question' });
-        }
-
-        // Update the question
-        const updatedQuestion = await prisma.question.update({
-            where: { id: parseInt(questionId, 10) },
-            data: { text, type },
-        });
-
-        return res.json({ message: 'Question updated successfully', question: updatedQuestion });
-    } catch (error) {
-        console.error('❌ Error updating question:', error);
-        return res.status(500).json({ error: 'Something went wrong while updating the question' });
-    }
-});
-
-// Delete a Question (Only accessible by admin or template author)
-router.delete('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN'), async (req, res) => {
-    const { templateId, questionId } = req.params;
-
-    try {
-        // Find the template to check if the current user is the author
-        const template = await prisma.template.findUnique({
-            where: { id: parseInt(templateId, 10) },
-        });
-
-        if (!template) {
-            return res.status(404).json({ error: 'Template not found' });
-        }
-
-        // Find the question to check its author
-        const question = await prisma.question.findUnique({
-            where: { id: parseInt(questionId, 10) },
-        });
-
-        if (!question) {
-            return res.status(404).json({ error: 'Question not found' });
-        }
-
-        // Ensure the user is either an admin or the author of the question (the author of the template)
-        if (req.user.role !== 'ADMIN' && question.templateId !== template.id) {
-            return res.status(403).json({ error: 'You are not authorized to delete this question' });
-        }
-
-        // Delete the question
-        await prisma.question.delete({
-            where: { id: parseInt(questionId, 10) },
-        });
-
-        return res.json({ message: 'Question deleted successfully' });
-    } catch (error) {
-        console.error('❌ Error deleting question:', error);
-        return res.status(500).json({ error: 'Something went wrong while deleting the question' });
-    }
-});
 
 
 

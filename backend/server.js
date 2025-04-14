@@ -5,6 +5,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const templateRoutes = require("./routes/templateRoutes");
 const formRoutes = require("./routes/formRoutes")
+const questionRoutes = require("./routes/questionRoutes")
 
 const app = express();
 
@@ -19,11 +20,11 @@ app.use(express.urlencoded({ extended: true })); // 👈 Ensure form parsing
 // ✅ Authentication routes
 app.use("/auth", authRoutes);
 
-
-// ✅ Template routes
-app.use("/auth", templateRoutes);  // <-- Register the template routes with the `/templates` prefix
+app.use("/auth", templateRoutes);
 
 app.use("/auth", formRoutes);
+
+app.use("/auth", questionRoutes);
 
 
 app.get("/", (req, res) => {

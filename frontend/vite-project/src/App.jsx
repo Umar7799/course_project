@@ -16,7 +16,7 @@ import AddQuestionForm from './pages/AddQuestionsForm';
 const App = () => {
   return (
     <AuthProvider>
-      <div className="container mt-4">
+      <div className="">
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -26,14 +26,8 @@ const App = () => {
             path="/profile"
             element={<ProtectedRoute element={<Profile />} />}  // Protect Profile route
           />
-          <Route
-            path="/templates"
-            element={<ProtectedRoute element={<TemplatesPage />} />}  // Protect Templates route
-          />
-          <Route
-            path="/templates/:id"
-            element={<ProtectedRoute element={<TemplateDetailPage />} />}  // Protect TemplateDetail route
-          />
+          <Route path="/templates" element={<TemplatesPage />} />
+          <Route path="/templates/:id" element={<TemplateDetailPage />} />
           <Route
             path="/createTemplate"
             element={<ProtectedRoute element={<CreateTemplate />} />}  // Protect TemplateDetail route

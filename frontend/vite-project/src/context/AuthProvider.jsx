@@ -75,8 +75,16 @@ export const AuthProvider = ({ children }) => {
         checkAuth();
     }, [checkAuth]);
 
+
+
+    // MODE TOGGLE
+    const [darkToggle, setDarkToggle] = useState(false);
+    const toggleFunction = () => {
+        setDarkToggle((prev) => !prev);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={{ user, login, logout, darkToggle, toggleFunction }}>
             {children}
         </AuthContext.Provider>
     );
