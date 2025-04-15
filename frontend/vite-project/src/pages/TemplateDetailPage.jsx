@@ -10,6 +10,7 @@ const TemplateDetailPage = () => {
   const [answers, setAnswers] = useState({}); // Store answers as an object
   const [isEditing, setIsEditing] = useState(null); // To manage editing state of a question
   const [editedQuestion, setEditedQuestion] = useState({}); // To store edited question data
+  const [error, setError] = useState(null); // Add error state
 
   const { user, darkToggle } = useAuth(); // Access the user object from the Auth context
 
@@ -22,8 +23,10 @@ const TemplateDetailPage = () => {
       try {
         const response = await axios.get(`http://localhost:5000/auth/templates/${id}/full`);
         setTemplate(response.data);
+        setError(null); // Clear any previous errors
       } catch (error) {
         console.error('Error fetching template:', error);
+        setError('There was an error fetching the template.'); // Set error state
       }
     };
 
@@ -61,12 +64,18 @@ const TemplateDetailPage = () => {
     }
   };
 
-
-
-
-
-
-
+  const handleDeleteAnswer = async (answerId) => {
+    try {
+      await axios.delete(`http://localhost:5000/forms/answers/${answerId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error deleting answer:', error);
+      alert('There was an error deleting your answer.');
+    }
+  };
 
   const handleDeleteQuestion = async (questionId) => {
     try {
@@ -125,7 +134,6 @@ const TemplateDetailPage = () => {
     return <div>Loading template...</div>;
   }
 
-
   const toggleTemplateVisibility = async () => {
     try {
       await axios.put(
@@ -137,7 +145,6 @@ const TemplateDetailPage = () => {
           },
         }
       );
-
 
       setTemplate(prev => ({
         ...prev,
@@ -151,13 +158,10 @@ const TemplateDetailPage = () => {
     }
   };
 
-
-
-
-
-
   return (
     <div className={darkToggle ? "mt-2 p-4 pt-20 bg-gray-500 text-white" : "mt-2 p-4 pt-20"}>
+      {error && <div className="text-red-500 font-semibold mb-4">{error}</div>} {/* Display error message */}
+
       <div className='text-xl font-semibold'>
         <h2>{template.title}</h2>
         <p className='text-lg'>{template.description}</p>
@@ -169,7 +173,6 @@ const TemplateDetailPage = () => {
           template.questions.map((question) => (
             <div key={question.id} className="mb-3 pt-4">
               <div className={darkToggle ? 'border p-4 rounded-lg border-gray-800 bg-gray-800 shadow' : 'border p-4 rounded-lg border-gray-400 bg-gray-400 shadow'}>
-
                 <label className='font-semibold'>{question.text}</label>
                 <input
                   className="bg-gray-50 my-2 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
@@ -177,6 +180,32 @@ const TemplateDetailPage = () => {
 
                 <button type="submit" className="rounded-md text-white font-semibold px-4 py-1 bg-green-600">Submit</button>
               </div>
+
+              {/* Show answers from template.questions[].answers */}
+              {Array.isArray(question.answers) &&
+                question.answers.map((ans) => (
+                  <div
+                    key={ans.id}
+                    className="mt-2 p-2 border rounded-md bg-white text-black flex justify-between items-center"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{ans.response}</p>
+                        <span className="text-xs text-gray-500">
+                          — by {ans.form?.user?.name || 'Unknown'}
+                      </span>
+
+                    </div>
+                    {user && ans.userId === user.id && (
+                      <button
+                        onClick={() => handleDeleteAnswer(ans.id)}
+                        className="ml-4 text-xs text-red-600 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                ))}
+
 
               {/* Only show the edit and delete buttons for the author or admin */}
               {(isAuthor || isAdmin) && (
@@ -189,20 +218,13 @@ const TemplateDetailPage = () => {
                 </div>
               )}
             </div>
-
-
           ))
         ) : (
           <div className='my-2'>No questions available for this template.</div>
         )}
-
-      </form >
-
-
+      </form>
 
       {/* Toggle Public/Private Button */}
-
-
       {(isAuthor || isAdmin) && (
         <div className="mt-6">
           <button
@@ -215,34 +237,27 @@ const TemplateDetailPage = () => {
         </div>
       )}
 
-
-
-
       {/* Editing Form */}
-      {
-        isEditing && (
-          <div className={darkToggle ? "mt-2 font-semibold border rounded-lg p-4 border-gray-800 shadow bg-gray-800" : "mt-2 font-semibold border rounded-lg p-4 border-gray-400 shadow bg-gray-400"}>
-            <h1 className='font-semibold text-lg'>Edit Question section</h1>
-            <form onSubmit={handleUpdateQuestion}>
-              <div className="">
-                <label className='text-sm'>Question Text:</label>
-                <input type="text" className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value={editedQuestion.text} onChange={(e) => setEditedQuestion({ ...editedQuestion, text: e.target.value })} />
-              </div>
-              <div className='flex mt-2'>
-                <button type="submit" className="bg-green-600 font-semibold text-white py-2 px-4 rounded-md">Update Question</button>
-                <button type="button" className="bg-red-500 font-semibold text-white py-2 px-4 rounded-md ml-2" onClick={() => setIsEditing(null)}>Cancel</button>
-              </div>
-            </form>
-          </div>
-        )
-      }
+      {isEditing && (
+        <div className={darkToggle ? "mt-2 font-semibold border rounded-lg p-4 border-gray-800 shadow bg-gray-800" : "mt-2 font-semibold border rounded-lg p-4 border-gray-400 shadow bg-gray-400"}>
+          <h1 className='font-semibold text-lg'>Edit Question section</h1>
+          <form onSubmit={handleUpdateQuestion}>
+            <div className="">
+              <label className='text-sm'>Question Text:</label>
+              <input type="text" className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value={editedQuestion.text} onChange={(e) => setEditedQuestion({ ...editedQuestion, text: e.target.value })} />
+            </div>
+            <div className='flex mt-2'>
+              <button type="submit" className="bg-green-600 font-semibold text-white py-2 px-4 rounded-md">Update Question</button>
+              <button type="button" className="bg-red-500 font-semibold text-white py-2 px-4 rounded-md ml-2" onClick={() => setIsEditing(null)}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Add New Question Form */}
-      {
-        (isAuthor || isAdmin) && (
-          <AddQuestionsForm templateId={id} />
-        )
-      }
+      {(isAuthor || isAdmin) && (
+        <AddQuestionsForm templateId={id} />
+      )}
 
       {/* Delete Template Button */}
       {(isAuthor || isAdmin) && (
@@ -272,9 +287,6 @@ const TemplateDetailPage = () => {
           </button>
         </div>
       )}
-
-
-
     </div >
   );
 };

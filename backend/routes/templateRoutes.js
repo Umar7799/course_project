@@ -104,47 +104,103 @@ router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
 });
 
 
-// Get a template and its questions
-router.get('/templates/:id/full', async (req, res) => {
-    const templateId = parseInt(req.params.id, 10);
-
-    if (isNaN(templateId)) {
-        return res.status(400).json({ error: 'Invalid template ID' });
-    }
+// Get Public Templates (accessible without login)
+router.get('/public/templates', async (req, res) => {
+    const { topic } = req.query;
 
     try {
-        const template = await prisma.template.findUnique({
-            where: { id: templateId },
+        const whereClause = {
+            isPublic: true,
+        };
+
+        if (topic) {
+            whereClause.topic = topic;
+        }
+
+        const templates = await prisma.template.findMany({
+            where: whereClause,
             select: {
                 id: true,
                 title: true,
                 description: true,
-                isPublic: true,
                 createdAt: true,
-                authorId: true,
-                questions: {
-                    select: {
-                        id: true,
-                        text: true,
-                        type: true
-                    }
-                }
-            }
+                isPublic: true,
+                topic: true,
+            },
         });
 
-        if (!template) {
-            return res.status(404).json({ error: 'Template not found' });
-        }
-
-        // If the user is logged in and has a token, proceed with sending template details
-        // No need to check for `isPublic` or the user being the author at this point
-
-        return res.json(template);
+        return res.json(templates);
     } catch (error) {
-        console.error("❌ Error fetching template with questions:", error);
-        return res.status(500).json({ error: 'Server error while retrieving template details' });
+        console.error(error);
+        return res.status(500).json({ error: 'Something went wrong while fetching public templates' });
     }
 });
+
+
+
+// Get a template and its questions + answers + userIds via forms
+router.get('/templates/:id/full', async (req, res) => {
+    const templateId = parseInt(req.params.id, 10);
+  
+    if (isNaN(templateId)) {
+      return res.status(400).json({ error: 'Invalid template ID' });
+    }
+  
+    try {
+      const template = await prisma.template.findUnique({
+        where: { id: templateId },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          isPublic: true,
+          createdAt: true,
+          authorId: true,
+          questions: {
+            select: {
+              id: true,
+              text: true,
+              type: true,
+              answers: {
+                select: {
+                  id: true,
+                  response: true,
+                  questionId: true,
+                  formId: true,
+                  form: {
+                    select: {
+                      userId: true,
+                      user: {
+                        select: {
+                          id: true,
+                          name: true,
+                          email: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+  
+      return res.json(template);
+    } catch (error) {
+      console.error("❌ Error fetching template with questions and answers:", error);
+      return res.status(500).json({ error: 'Server error while retrieving template details' });
+    }
+  });
+  
+  
+
+
+
 
 router.put('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const templateId = parseInt(req.params.id, 10);
