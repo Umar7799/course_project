@@ -9,7 +9,7 @@ const router = Router();
 
 
 // Add a Question to a Template (Admin Only)
-router.post('/templates/:id/questions', authMiddleware('ADMIN'), async (req, res) => {
+router.post('/templates/:id/questions', authMiddleware('ADMIN', 'AUTHOR'), async (req, res) => {
     const { text, type } = req.body;
     const templateId = parseInt(req.params.id, 10);
 
@@ -52,7 +52,7 @@ router.post('/templates/:id/questions', authMiddleware('ADMIN'), async (req, res
 });
 
 // Edit a Question (Only accessible by admin or template author)
-router.put('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN'), async (req, res) => {
+router.put('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN', 'AUTHOR'), async (req, res) => {
     const { text, type } = req.body;
     const { templateId, questionId } = req.params;
 
@@ -62,16 +62,20 @@ router.put('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN
     }
 
     try {
-        // Find the template to check if the current user is the author
+        // Fetch template to check author
         const template = await prisma.template.findUnique({
             where: { id: parseInt(templateId, 10) },
+            select: { authorId: true },  // Only get the authorId
         });
 
         if (!template) {
             return res.status(404).json({ error: 'Template not found' });
         }
 
-        // Find the question to check its author
+        // Log the template authorId for debugging
+        console.log("Template Author ID:", template.authorId);
+
+        // Find the question
         const question = await prisma.question.findUnique({
             where: { id: parseInt(questionId, 10) },
         });
@@ -80,8 +84,11 @@ router.put('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN
             return res.status(404).json({ error: 'Question not found' });
         }
 
-        // Ensure the user is either an admin or the author of the question (the author of the template)
-        if (req.user.role !== 'ADMIN' && question.templateId !== template.id) {
+        // Log the logged-in user (req.user)
+        console.log('Logged-in User:', req.user);
+
+        // Ensure the user is either an admin or the author of the template (not the question)
+        if (req.user.role !== 'ADMIN' && template.authorId !== req.user.id) {
             return res.status(403).json({ error: 'You are not authorized to edit this question' });
         }
 
@@ -98,8 +105,11 @@ router.put('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN
     }
 });
 
+
+
+
 // Delete a Question (Only accessible by admin or template author)
-router.delete('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN'), async (req, res) => {
+router.delete('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN', 'AUTHOR'), async (req, res) => {
     const { templateId, questionId } = req.params;
 
     try {
