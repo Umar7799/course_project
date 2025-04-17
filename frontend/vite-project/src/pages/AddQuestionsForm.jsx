@@ -67,13 +67,13 @@ const AddQuestionForm = ({ templateId }) => {
         </div>
         <div className='font-semibold my-2'>
           <label>Type:</label><br />
-          <select className='border rounded-md px-4 py-2' value={type} onChange={(e) => setType(e.target.value)}>
+          <select className='border rounded-md px-4 ml-2 mt-1 py-2' value={type} onChange={(e) => setType(e.target.value)}>
             <option className='text-black' value="SINGLE_LINE">Single Line</option>
             <option className='text-black' value="MULTI_LINE">Multi Line</option>
             <option className='text-black' value="INTEGER">Integer</option>
             <option className='text-black' value="CHECKBOX">Checkbox</option>
           </select>
-          <button className='bg-green-600 font-semibold text-white ml-2 py-2 px-4 rounded-md' type="submit">Add Question</button>
+          <button className='bg-green-600 font-semibold text-white mt-2 sm:mt-0 ml-2 py-2 px-4 rounded-md' type="submit">Add Question</button>
         </div>
         <div></div>
       </form>

@@ -14,6 +14,10 @@ const TemplateDetailPage = () => {
   const [isEditing, setIsEditing] = useState(null);
   const [editedQuestion, setEditedQuestion] = useState({});
   const [error, setError] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [hasLiked, setHasLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
   const { user, darkToggle } = useAuth();
 
@@ -25,6 +29,9 @@ const TemplateDetailPage = () => {
       try {
         const response = await axios.get(`http://localhost:5000/auth/templates/${id}/full`);
         setTemplate(response.data);
+        setLikesCount(response.data.likes?.length || 0);
+        setHasLiked(response.data.likes?.some((like) => like.userId === user?.id));
+        setComments(response.data.comments || []);
         setError(null);
       } catch (error) {
         console.error('Error fetching template:', error);
@@ -32,7 +39,46 @@ const TemplateDetailPage = () => {
       }
     };
     fetchTemplate();
-  }, [id]);
+  }, [id, user?.id]);
+
+  const handleLikeToggle = async () => {
+    try {
+      await axios.post(
+        `http://localhost:5000/auth/templates/${id}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setHasLiked(!hasLiked);
+      setLikesCount((prev) => (hasLiked ? prev - 1 : prev + 1));
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('You must be logged in to like a template.');
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/auth/templates/${id}/comments`,
+        { content: newComment },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setComments((prev) => [...prev, response.data]);
+      setNewComment('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('You must be logged in to comment.');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,7 +111,7 @@ const TemplateDetailPage = () => {
 
   const handleDeleteAnswer = async (answerId) => {
     try {
-      await axios.delete(`http://localhost:5000/forms/answers/${answerId}`, {
+      await axios.delete(`http://localhost:5000/auth/forms/answers/${answerId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -152,7 +198,14 @@ const TemplateDetailPage = () => {
     <div className={darkToggle ? "mt-2 p-4 pt-20 bg-gray-500 text-white" : "mt-2 p-4 pt-20"}>
       {error && <div className="text-red-500 font-semibold mb-4">{error}</div>}
 
-      <TemplateHeader title={template.title} description={template.description} />
+      <TemplateHeader
+        title={template.title}
+        description={template.description}
+        image={template.image}
+        likes={likesCount}
+        hasLiked={hasLiked}
+        onLike={handleLikeToggle}
+      />
 
       <form onSubmit={handleSubmit}>
         {Array.isArray(template.questions) && template.questions.length > 0 ? (
@@ -184,6 +237,35 @@ const TemplateDetailPage = () => {
         </div>
       </form>
 
+      <div className='mt-6'>
+        <h3 className='text-lg font-semibold mb-2'>Comments</h3>
+        <div className='space-y-2 mb-4'>
+          {comments.length > 0 ? comments.map((comment) => (
+            <div key={comment.id} className='border p-2 rounded'>
+              <p className='text-sm'>{comment.content}</p>
+              <span className='text-xs text-gray-500'>By User #{comment.userId}</span>
+            </div>
+          )) : (
+            <p className='text-sm text-gray-600'>No comments yet.</p>
+          )}
+        </div>
+
+        {user && (
+          <div className='flex items-center space-x-2'>
+            <input
+              type='text'
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              className='border rounded px-2 py-1 flex-grow'
+              placeholder='Add a comment...'
+            />
+            <button onClick={handleAddComment} className='bg-blue-600 text-white px-3 py-1 rounded'>
+              Post
+            </button>
+          </div>
+        )}
+      </div>
+
       {(isAuthor || isAdmin) && (
         <>
           <TemplateActions
@@ -191,7 +273,6 @@ const TemplateDetailPage = () => {
             toggleVisibility={toggleTemplateVisibility}
             templateId={id}
           />
-
           <AddQuestionsForm templateId={id} />
         </>
       )}

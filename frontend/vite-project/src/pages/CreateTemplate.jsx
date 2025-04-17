@@ -60,7 +60,7 @@ const CreateTemplatePage = () => {
       topic,
       tags: tags.split(',').map(tag => tag.trim()),
       image: imageUrl,
-      public: publicStatus,
+      isPublic: publicStatus,
     };
 
     try {
