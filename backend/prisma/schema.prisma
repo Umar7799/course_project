@@ -8,16 +8,19 @@ datasource db {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  name      String
-  email     String     @unique
-  password  String
-  role      Role       @default(USER)
-  templates Template[]
-  forms     Form[]
-  comments  Comment[]
-  likes     Like[]
+  id               Int        @id @default(autoincrement())
+  name             String
+  email            String     @unique
+  password         String
+  role             Role       @default(USER)
+  templates        Template[] @relation("TemplateAccess")
+  authoredTemplates Template[] @relation("AuthorOfTemplate") // New relation for authored templates
+  forms            Form[]
+  comments         Comment[]
+  likes            Like[]
 }
+
+
 
 model Template {
   id          Int        @id @default(autoincrement())
@@ -29,12 +32,15 @@ model Template {
   tags        String[]
   image       String?
   authorId    Int
-  author      User       @relation(fields: [authorId], references: [id])
+  author      User       @relation("AuthorOfTemplate", fields: [authorId], references: [id]) // Specify the opposite relation name
+  allowedUsers User[]    @relation("TemplateAccess")
   questions   Question[]
   forms       Form[]
   comments    Comment[]
   likes       Like[]
 }
+
+
 
 model Comment {
   id         Int      @id @default(autoincrement())

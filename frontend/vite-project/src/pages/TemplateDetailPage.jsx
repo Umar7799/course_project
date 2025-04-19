@@ -235,6 +235,7 @@ const TemplateDetailPage = () => {
     }
   };
 
+
   if (!template) return <div>Loading template...</div>;
 
   return (
@@ -315,6 +316,88 @@ const TemplateDetailPage = () => {
 
       {(isAuthor || isAdmin) && (
         <>
+          {isAuthor && (
+            <div className="mt-6 border-t pt-4">
+              <h3 className="text-lg font-bold mb-2">Manage Access</h3>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const email = e.target.elements.email.value;
+                  try {
+                    await axios.post(
+                      `http://localhost:5000/auth/templates/${id}/allow`,
+                      { email },
+                      {
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                      }
+                    );
+                    alert(`Access granted to ${email}`);
+                    e.target.reset();
+                  } catch (err) {
+                    console.error('Error adding user:', err);
+                    alert(err.response?.data?.message || 'Failed to add user');
+                  }
+                }}
+                className="flex gap-2 items-center mb-4"
+              >
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter user email"
+                  className="border px-3 py-1 rounded flex-grow"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-3 py-1 rounded"
+                >
+                  Allow User
+                </button>
+              </form>
+
+              {template.allowedUsers?.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-1">Allowed Users:</h4>
+                  <ul className="space-y-1">
+                    {template.allowedUsers.map((u) => (
+                      <li key={u.id} className="flex justify-between items-center bg-gray-100 p-2 rounded">
+                        <span>{u.email}</span>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await axios.delete(
+                                `http://localhost:5000/auth/templates/${id}/allow`,
+                                {
+                                  data: { email: u.email },
+                                  headers: {
+                                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                                  },
+                                }
+                              );
+                              alert(`${u.email} removed`);
+                              setTemplate((prev) => ({
+                                ...prev,
+                                allowedUsers: prev.allowedUsers.filter((user) => user.email !== u.email),
+                              }));
+                            } catch (err) {
+                              console.error('Error removing user:', err);
+                              alert(err.response?.data?.message || 'Failed to remove user');
+                            }
+                          }}
+                          className="bg-red-500 text-white px-2 py-1 rounded text-sm"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           <TemplateActions
             isPublic={template.isPublic}
             toggleVisibility={toggleTemplateVisibility}
