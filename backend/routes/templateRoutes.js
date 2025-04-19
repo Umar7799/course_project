@@ -141,62 +141,83 @@ router.get('/public/templates', async (req, res) => {
 // Get a template and its questions + answers + userIds via forms
 router.get('/templates/:id/full', async (req, res) => {
     const templateId = parseInt(req.params.id, 10);
-
+  
     if (isNaN(templateId)) {
-        return res.status(400).json({ error: 'Invalid template ID' });
+      return res.status(400).json({ error: 'Invalid template ID' });
     }
-
+  
     try {
         const template = await prisma.template.findUnique({
             where: { id: templateId },
             select: {
-                id: true,
-                title: true,
-                description: true,
-                isPublic: true,
-                image: true,
-                createdAt: true,
-                authorId: true,
-                questions: {
+              id: true,
+              title: true,
+              description: true,
+              isPublic: true,
+              image: true,
+              createdAt: true,
+              authorId: true,
+              questions: {
+                select: {
+                  id: true,
+                  text: true,
+                  type: true,
+                  answers: {
                     select: {
-                        id: true,
-                        text: true,
-                        type: true,
-                        answers: {
+                      id: true,
+                      response: true,
+                      questionId: true,
+                      formId: true,
+                      form: {
+                        select: {
+                          userId: true,
+                          user: {
                             select: {
-                                id: true,
-                                response: true,
-                                questionId: true,
-                                formId: true,
-                                form: {
-                                    select: {
-                                        userId: true,
-                                        user: {
-                                            select: {
-                                                id: true,
-                                                name: true,
-                                                email: true,
-                                            },
-                                        },
-                                    },
-                                },
+                              id: true,
+                              name: true,
+                              email: true,
                             },
+                          },
                         },
+                      },
                     },
+                  },
                 },
+              },
+              comments: {
+                select: {
+                  id: true,
+                  text: true,
+                  createdAt: true,
+                  userId: true,
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              likes: {
+                select: {
+                  userId: true, // 👈 this is key
+                },
+              },
             },
-        });
-
-        if (!template) {
-            return res.status(404).json({ error: 'Template not found' });
-        }
-
-        return res.json(template);
+          });
+          
+  
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+  
+      return res.json(template);
     } catch (error) {
-        console.error("❌ Error fetching template with questions and answers:", error);
-        return res.status(500).json({ error: 'Server error while retrieving template details' });
+      console.error("❌ Error fetching template with questions and answers:", error);
+      return res.status(500).json({ error: 'Server error while retrieving template details' });
     }
-});
+  });
+  
 
 
 
@@ -245,18 +266,18 @@ router.put('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res) =
 
 // POST /templates/:id/comments - Add a comment
 router.post('/templates/:id/comments', authMiddleware('USER', 'ADMIN'), async (req, res) => {
+    const { text } = req.body; // changed from content
     const templateId = parseInt(req.params.id, 10);
-    const { content } = req.body;
     const userId = req.user.id;
 
-    if (!content) {
-        return res.status(400).json({ error: 'Comment content is required' });
+    if (!text) {
+        return res.status(400).json({ error: 'Comment text is required' });
     }
 
     try {
         const comment = await prisma.comment.create({
             data: {
-                content,
+                text, // now matches variable name
                 userId,
                 templateId,
             },
@@ -276,6 +297,7 @@ router.post('/templates/:id/comments', authMiddleware('USER', 'ADMIN'), async (r
         return res.status(500).json({ error: 'Could not add comment' });
     }
 });
+
 
 // GET /templates/:id/comments - Get all comments for a template
 router.get('/templates/:id/comments', async (req, res) => {
@@ -309,27 +331,33 @@ router.get('/templates/:id/comments', async (req, res) => {
 router.post('/templates/:id/like', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const templateId = parseInt(req.params.id, 10);
     const userId = req.user.id;
-
+  
     try {
-        // Check if the user already liked it
-        const existingLike = await prisma.like.findFirst({
-            where: { userId, templateId },
-        });
-
-        if (existingLike) {
-            return res.status(400).json({ error: 'Template already liked' });
-        }
-
-        const like = await prisma.like.create({
-            data: { userId, templateId },
-        });
-
-        res.status(201).json(like);
+      const existing = await prisma.like.findFirst({
+        where: {
+          templateId,
+          userId,
+        },
+      });
+  
+      if (existing) {
+        return res.status(400).json({ error: 'Template already liked' });
+      }
+  
+      const like = await prisma.like.create({
+        data: {
+          templateId,
+          userId,
+        },
+      });
+  
+      return res.status(201).json(like);
     } catch (error) {
-        console.error('❌ Error liking template:', error);
-        res.status(500).json({ error: 'Failed to like template' });
+      console.error('❌ Error liking template:', error);
+      return res.status(500).json({ error: 'Server error while liking template' });
     }
-});
+  });
+  
 
 
 // GET /templates/:id/likes - Get total likes
@@ -353,19 +381,31 @@ router.get('/templates/:id/likes', async (req, res) => {
 router.delete('/templates/:id/like', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const templateId = parseInt(req.params.id, 10);
     const userId = req.user.id;
-
+  
     try {
-        await prisma.like.deleteMany({
-            where: { userId, templateId },
-        });
-
-        res.status(204).send(); // No content
+      const existing = await prisma.like.findFirst({
+        where: {
+          templateId,
+          userId,
+        },
+      });
+  
+      if (!existing) {
+        return res.status(404).json({ error: 'Like not found' });
+      }
+  
+      await prisma.like.delete({
+        where: { id: existing.id },
+      });
+  
+      return res.status(200).json({ message: 'Like removed' });
     } catch (error) {
-        console.error('❌ Error unliking template:', error);
-        res.status(500).json({ error: 'Failed to unlike template' });
+      console.error('❌ Error removing like:', error);
+      return res.status(500).json({ error: 'Server error while removing like' });
     }
-});
-
+  });
+  
+  
 
 
 

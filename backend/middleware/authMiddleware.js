@@ -28,21 +28,27 @@ const authMiddleware = (...allowedRoles) => {
 
             let bypassRoleCheck = false;
 
-            const templateId = parseInt(req.params.templateId || req.params.id);
-            const questionId = parseInt(req.params.questionId || req.params.id);
+            const id = parseInt(req.params.id);
+            const templateId = parseInt(req.params.templateId || id);
+            const questionId = parseInt(req.params.questionId || id);
 
+            // ✅ Ensure valid template lookup before role check
             if (!isNaN(templateId)) {
                 const template = await prisma.template.findUnique({
                     where: { id: templateId },
                 });
 
-                if (template?.authorId === req.user.id) {
-                    bypassRoleCheck = true;
-                    console.log("✅ User is the author of this template.");
+                if (template) {
+                    if (template.authorId === user.id) {
+                        bypassRoleCheck = true;
+                        console.log("✅ User is the author of this template.");
+                    }
+                } else {
+                    console.warn("⚠️ Template not found for ID:", templateId);
                 }
             }
 
-            if (!bypassRoleCheck && req.originalUrl.includes("/questions/") && questionId) {
+            if (!bypassRoleCheck && req.originalUrl.includes("/questions/") && !isNaN(questionId)) {
                 const question = await prisma.question.findUnique({
                     where: { id: questionId },
                     select: {
@@ -54,14 +60,13 @@ const authMiddleware = (...allowedRoles) => {
                     },
                 });
 
-                if (question?.template?.authorId === req.user.id) {
+                if (question?.template?.authorId === user.id) {
                     bypassRoleCheck = true;
                     console.log("✅ User owns the template that this question belongs to.");
                 }
             }
 
-            // Check role if not bypassed
-            if (!bypassRoleCheck && allowedRoles.length > 0 && !allowedRoles.includes(req.user.role)) {
+            if (!bypassRoleCheck && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
                 return res.status(403).json({ message: "Forbidden: Insufficient rights" });
             }
 

@@ -79,6 +79,7 @@ const QuestionItem = ({
           </div>
           {user && ans.form?.userId === user.id && (
             <button
+            type='button'
               onClick={() => onDeleteAnswer(ans.id)}
               className="ml-4 text-xs text-red-600 hover:underline"
             >

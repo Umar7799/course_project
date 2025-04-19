@@ -43,35 +43,52 @@ const TemplateDetailPage = () => {
 
   const handleLikeToggle = async () => {
     try {
-      await axios.post(
-        `http://localhost:5000/auth/templates/${id}/like`,
-        {},
-        {
+      if (hasLiked) {
+        // If already liked, send DELETE
+        await axios.delete(`http://localhost:5000/auth/templates/${id}/like`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-        }
-      );
-      setHasLiked(!hasLiked);
-      setLikesCount((prev) => (hasLiked ? prev - 1 : prev + 1));
+        });
+        setHasLiked(false);
+        setLikesCount((prev) => prev - 1);
+      } else {
+        // If not liked yet, send POST
+        await axios.post(
+          `http://localhost:5000/auth/templates/${id}/like`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          }
+        );
+        setHasLiked(true);
+        setLikesCount((prev) => prev + 1);
+      }
     } catch (error) {
-      console.error('Error toggling like:', error);
-      alert('You must be logged in to like a template.');
+      console.error("Error toggling like:", error.response?.data || error.message);
     }
   };
+
+
+
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
       const response = await axios.post(
         `http://localhost:5000/auth/templates/${id}/comments`,
-        { content: newComment },
+        { text: newComment },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
+
       );
+      console.log('Submitting comment:', { text: newComment });
+
       setComments((prev) => [...prev, response.data]);
       setNewComment('');
     } catch (error) {
@@ -82,12 +99,18 @@ const TemplateDetailPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const formattedAnswers = Object.entries(answers).map(([questionId, response]) => ({
-        questionId: parseInt(questionId),
-        response,
-      }));
 
+    const formattedAnswers = Object.entries(answers).map(([questionId, response]) => ({
+      questionId: parseInt(questionId),
+      response,
+    }));
+
+    if (formattedAnswers.length === 0) {
+      alert('You must answer at least one question before submitting.');
+      return;
+    }
+
+    try {
       await axios.post(
         `http://localhost:5000/auth/forms/submit`,
         {
@@ -105,9 +128,17 @@ const TemplateDetailPage = () => {
       setAnswers({});
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('To submit an answer you have to log in');
+
+      if (error.response?.status === 400) {
+        alert(error.response.data?.message || 'Form submission was invalid.');
+      } else if (error.response?.status === 401) {
+        alert('You must be logged in to submit the form.');
+      } else {
+        alert('An unexpected error occurred.');
+      }
     }
   };
+
 
   const handleDeleteAnswer = async (answerId) => {
     try {
@@ -116,11 +147,23 @@ const TemplateDetailPage = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
+
+      // Optionally clear from local answers state if needed
+      setAnswers((prev) => {
+        const updated = { ...prev };
+        // Remove the key if it exists (you may need questionId here)
+        for (const key in updated) {
+          if (updated[key] === answerId) delete updated[key];
+        }
+        return updated;
+      });
+
     } catch (error) {
       console.error('Error deleting answer:', error);
       alert('There was an error deleting your answer.');
     }
   };
+
 
   const handleDeleteQuestion = async (questionId) => {
     try {
@@ -241,13 +284,17 @@ const TemplateDetailPage = () => {
         <h3 className='text-lg font-semibold mb-2'>Comments</h3>
         <div className='space-y-2 mb-4'>
           {comments.length > 0 ? comments.map((comment) => (
-            <div key={comment.id} className='border p-2 rounded'>
-              <p className='text-sm'>{comment.content}</p>
-              <span className='text-xs text-gray-500'>By User #{comment.userId}</span>
+            <div key={comment.id} className='p-2'>
+              <p className='font-semibold'>{comment.text}</p>
+              <span className='text-xs text-gray-500'>
+                By {comment.user?.name ? comment.user.name : `User #${comment.userId}`}
+              </span>
             </div>
           )) : (
             <p className='text-sm text-gray-600'>No comments yet.</p>
           )}
+
+
         </div>
 
         {user && (

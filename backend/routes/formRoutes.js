@@ -12,6 +12,12 @@ router.post('/forms/submit', authMiddleware(), async (req, res) => {
     const { templateId, answers } = req.body;
     const userId = req.user.id;
 
+    console.log("🧾 Incoming form submit:", {
+      userId,
+      templateId,
+      answers,
+    });
+
     if (!templateId || !answers || answers.length === 0) {
       return res.status(400).json({ error: 'Template ID and answers are required' });
     }
@@ -66,36 +72,33 @@ router.get('/public/forms/:templateId/answers', async (req, res) => {
 });
 
 // DELETE /answers/:answerId
-router.delete('/answers/:answerId', authMiddleware(), async (req, res) => {
-    const { answerId } = req.params;
-    const userId = req.user.id;
-  
-    try {
-      // Get the answer with form info
-      const answer = await prisma.answer.findUnique({
-        where: { id: answerId },
-        include: {
-          form: true,
-        },
-      });
-  
-      if (!answer) {
-        return res.status(404).json({ error: 'Answer not found' });
-      }
-  
-      // Check if the logged-in user is the owner of the form this answer belongs to
-      if (answer.form.userId !== userId) {
-        return res.status(403).json({ error: 'You can only delete your own answers' });
-      }
-  
-      await prisma.answer.delete({ where: { id: answerId } });
-  
-      return res.json({ message: 'Answer deleted successfully' });
-    } catch (error) {
-      console.error('❌ Error deleting answer:', error);
-      return res.status(500).json({ error: 'Failed to delete answer' });
+router.delete('/forms/answers/:answerId', authMiddleware(), async (req, res) => {
+  const answerId = parseInt(req.params.answerId, 10);
+  const userId = req.user.id;
+
+  try {
+    const answer = await prisma.answer.findUnique({
+      where: { id: answerId },
+      include: { form: true },
+    });
+
+    if (!answer) {
+      return res.status(404).json({ error: 'Answer not found' });
     }
-  });
+
+    if (answer.form.userId !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own answers' });
+    }
+
+    await prisma.answer.delete({ where: { id: answerId } });
+
+    return res.json({ message: 'Answer deleted successfully' });
+  } catch (error) {
+    console.error('❌ Error deleting answer:', error);
+    return res.status(500).json({ error: 'Failed to delete answer' });
+  }
+});
+
   
 
 
