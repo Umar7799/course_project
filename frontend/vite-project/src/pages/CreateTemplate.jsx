@@ -127,7 +127,7 @@ const CreateTemplatePage = () => {
             value={tags}
             className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
             onChange={(e) => setTags(e.target.value)}
-            placeholder="Comma-separated (e.g., react, tailwind)"
+            placeholder="tags"
           />
         </div>
 

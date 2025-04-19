@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
-const templateRoutes = require("./routes/templateRoutes");
+const templateRoutes = require('./routes/templates');
 const formRoutes = require("./routes/formRoutes")
 const questionRoutes = require("./routes/questionRoutes")
 
