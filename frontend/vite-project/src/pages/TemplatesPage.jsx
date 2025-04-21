@@ -61,12 +61,8 @@ const TemplatesPage = () => {
       {/* Topic Filter */}
       <div className="my-3">
         <label htmlFor="topicSelect" className="pl-1 text-sm font-semibold">Filter by Topic</label>
-        <select
-          id="topicSelect"
-          className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-          value={selectedTopic}
-          onChange={(e) => setSelectedTopic(e.target.value)}
-        >
+        <select className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+          id="topicSelect" value={selectedTopic} onChange={(e) => setSelectedTopic(e.target.value)}>
           <option value="">All Topics</option>
           {topics.map((topic, idx) => (
             <option key={idx} value={topic}>{topic}</option>
@@ -78,9 +74,7 @@ const TemplatesPage = () => {
         {templates.length > 0 ? (
           templates.map(template => (
             <Link key={template.id} to={`/templates/${template.id}`}>
-              <div className={darkToggle
-                ? 'shadow-lg text-white bg-gray-800 p-4 rounded-lg font-semibold'
-                : 'border border-gray-800 shadow-lg p-4 rounded-lg font-semibold'}>
+              <div className={darkToggle ? 'shadow-lg text-white bg-gray-800 p-4 rounded-lg font-semibold' : 'border border-gray-800 shadow-lg p-4 rounded-lg font-semibold'}>
                 <h1 className='text-lg'>{template.title}</h1>
                 <p>{template.description}</p>
                 <small>Created on: {new Date(template.createdAt).toLocaleDateString()}</small>

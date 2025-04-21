@@ -7,7 +7,6 @@ const authMiddleware = require('../../middleware/authMiddleware');
 const router = Router();
 
 router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), async (req, res) => {
-    console.log("🔹 Request received to create a template");
 
     const {
         title,
@@ -61,7 +60,6 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), async (req, res)
         console.error('❌ Error creating template:', err);
         res.status(500).json({ error: 'Failed to create template' });
     }
-
 
 });
 

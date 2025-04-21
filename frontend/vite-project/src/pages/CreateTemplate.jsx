@@ -92,97 +92,57 @@ const CreateTemplatePage = () => {
 
         <div className='mt-4'>
           <label className="pl-1 font-semibold">Title</label>
-          <input
-            type="text"
-            className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <input className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+            type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
 
         <div className='mt-4'>
           <label className="pl-1 font-semibold">Description</label>
-          <textarea
-            value={description}
-            className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <textarea className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+            value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
 
         <div className='mt-4'>
           <label className="pl-1 font-semibold">Topic</label>
-          <input
-            type="text"
-            value={topic}
-            className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Enter topic"
-          />
+          <input className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+            type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Enter topic" />
         </div>
 
         <div className='mt-4'>
           <label className="pl-1 font-semibold">Tags</label>
-          <input
-            type="text"
-            value={tags}
-            className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="tags"
-          />
+          <input className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+            type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Enter tags" />
         </div>
 
         <div className='mt-4'>
           <label className="pl-1 font-semibold">Image URL (optional)</label>
-          <input
-            type="text"
-            value={image}
-            className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="Paste image URL"
-          />
+          <input className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+            type="text" value={image} onChange={(e) => setImage(e.target.value)} placeholder="Paste image URL" />
         </div>
 
         <div className='mt-4'>
           <label className='block pl-1 font-semibold'>Or Upload Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            className='underline p-2.5'
-            onChange={(e) => setImageFile(e.target.files[0])}
-          />
+          <input className='underline p-2.5'
+            type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
         </div>
 
         <div className='mt-4'>
           <label className='pl-1 font-semibold'>
             Public
-            <input
-              className='ml-2'
-              type="checkbox"
-              checked={publicStatus}
-              onChange={() => setPublicStatus(!publicStatus)}
-            />
+            <input className='ml-2'
+              type="checkbox" checked={publicStatus} onChange={() => setPublicStatus(!publicStatus)} />
           </label>
         </div>
 
         {!publicStatus && (
           <div className='mt-4'>
             <label className="pl-1 font-semibold">Allowed Users (Emails)</label>
-            <input
-              type="text"
-              value={allowedUsers}
-              className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-              onChange={(e) => setAllowedUsers(e.target.value)}
-              placeholder="Comma-separated emails"
-            />
+            <input className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+              type="text" value={allowedUsers} onChange={(e) => setAllowedUsers(e.target.value)} placeholder="Comma-separated emails" />
           </div>
         )}
 
-        <button
-          type="submit"
-          className='mt-6 bg-green-600 font-semibold text-white py-2 px-4 rounded-md'
-        >
-          Create Template
-        </button>
+        <button className='mt-6 bg-green-600 font-semibold text-white py-2 px-4 rounded-md' type="submit">Create Template</button>
       </form>
     </div>
   );

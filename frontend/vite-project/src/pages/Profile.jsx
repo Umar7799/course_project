@@ -9,8 +9,6 @@ const Profile = () => {
 
   const navigate = useNavigate();
 
-
-
   // Fetch user profile data from the backend
   useEffect(() => {
     if (!user) {

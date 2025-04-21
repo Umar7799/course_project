@@ -7,10 +7,7 @@ const TemplateHeader = ({ title, description, image, likes, hasLiked, onLike }) 
       <p className='text-lg'>{description}</p>
       {image && <img className='w-fit max-w-xs my-2' src={image} alt={title} />}
       <div className='mt-2 flex items-center space-x-4'>
-        <button
-          onClick={onLike}
-          className={`px-3 py-1 rounded-md text-white ${hasLiked ? 'bg-red-500' : 'bg-gray-700'}`}
-        >
+        <button className={`px-3 py-1 rounded-md text-white ${hasLiked ? 'bg-red-500' : 'bg-gray-700'}`} onClick={onLike}>
           {hasLiked ? 'Unlike' : 'Like'}
         </button>
         <span>{likes} {likes === 1 ? 'like' : 'likes'}</span>

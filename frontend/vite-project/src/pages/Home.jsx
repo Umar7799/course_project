@@ -5,12 +5,6 @@ import { useAuth } from '../context/useAuth';
 const Home = () => {
   const { darkToggle } = useAuth();
 
-
-
-
-
-
-
   return (
     <div className={darkToggle ? 'bg-gray-900 text-white min-h-screen pt-36' : 'min-h-screen pt-36'}>
       <div className='flex justify-center pt-10 text-xl font-semibold'>

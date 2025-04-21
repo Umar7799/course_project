@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import AddQuestionsForm from './AddQuestionsForm';
-import QuestionItem from '../components/QuestionItem';
-import TemplateHeader from '../components/TemplateHeader';
-import TemplateActions from '../components/TemplateActions';
+import TemplateActions from '../components/templateDetail/TemplateActions';
+import TemplateHeader from '../components/templateDetail/TemplateHeader';
+import CommentSection from '../components/templateDetail/CommentSection';
+import AccessManager from '../components/templateDetail/AccessManager';
+import FormSubmission from '../components/templateDetail/FormSubmission';
+import AddQuestionsForm from '../components/templateDetail/AddQuestionsForm'
 
 const TemplateDetailPage = () => {
   const { id } = useParams();
@@ -15,7 +17,6 @@ const TemplateDetailPage = () => {
   const [editedQuestion, setEditedQuestion] = useState({});
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
   const [hasLiked, setHasLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
 
@@ -72,31 +73,6 @@ const TemplateDetailPage = () => {
   };
 
 
-
-
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    try {
-      const response = await axios.post(
-        `http://localhost:5000/auth/templates/${id}/comments`,
-        { text: newComment },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-
-      );
-      console.log('Submitting comment:', { text: newComment });
-
-      setComments((prev) => [...prev, response.data]);
-      setNewComment('');
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      alert('You must be logged in to comment.');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -137,10 +113,13 @@ const TemplateDetailPage = () => {
         alert('An unexpected error occurred.');
       }
     }
+
   };
 
 
   const handleDeleteAnswer = async (answerId) => {
+    if (!answerId) return;
+
     try {
       await axios.delete(`http://localhost:5000/auth/forms/answers/${answerId}`, {
         headers: {
@@ -148,21 +127,20 @@ const TemplateDetailPage = () => {
         },
       });
 
-      // Optionally clear from local answers state if needed
+      // Clean up local state if needed
       setAnswers((prev) => {
         const updated = { ...prev };
-        // Remove the key if it exists (you may need questionId here)
-        for (const key in updated) {
+        Object.keys(updated).forEach((key) => {
           if (updated[key] === answerId) delete updated[key];
-        }
+        });
         return updated;
       });
-
     } catch (error) {
       console.error('Error deleting answer:', error);
-      alert('There was an error deleting your answer.');
+      alert('Failed to delete your answer.');
     }
   };
+
 
 
   const handleDeleteQuestion = async (questionId) => {
@@ -215,6 +193,8 @@ const TemplateDetailPage = () => {
     }
   };
 
+
+
   const toggleTemplateVisibility = async () => {
     try {
       await axios.put(`http://localhost:5000/auth/templates/${id}/visibility`, {}, {
@@ -236,173 +216,52 @@ const TemplateDetailPage = () => {
   };
 
 
+
+  const handleAnswerUpdate = (answerId, questionId, newResponse) => {
+    // Only update the template's answers array (for displayed answers)
+    setTemplate(prevTemplate => ({
+      ...prevTemplate,
+      questions: prevTemplate.questions.map(question => ({
+        ...question,
+        answers: question.answers?.map(ans => 
+          ans.id === answerId ? { ...ans, response: newResponse } : ans
+        )
+      }))
+    }));
+    
+    // DON'T update the answers state for the input field
+    // This prevents the input field from being populated with the edited answer
+  };
+
+
   if (!template) return <div>Loading template...</div>;
 
   return (
     <div className={darkToggle ? "mt-2 p-4 pt-20 bg-gray-500 text-white" : "mt-2 p-4 pt-20"}>
       {error && <div className="text-red-500 font-semibold mb-4">{error}</div>}
 
-      <TemplateHeader
-        title={template.title}
-        description={template.description}
-        image={template.image}
-        likes={likesCount}
-        hasLiked={hasLiked}
-        onLike={handleLikeToggle}
-      />
+      <TemplateHeader title={template.title} description={template.description}
+        image={template.image} likes={likesCount} hasLiked={hasLiked} onLike={handleLikeToggle} />
 
-      <form onSubmit={handleSubmit}>
-        {Array.isArray(template.questions) && template.questions.length > 0 ? (
-          template.questions.map((question) => (
-            <QuestionItem
-              key={question.id}
-              question={question}
-              answer={answers[question.id] || ''}
-              setAnswers={setAnswers}
-              user={user}
-              isAuthor={isAuthor}
-              isAdmin={isAdmin}
-              darkToggle={darkToggle}
-              onEdit={() => handleEditQuestion(question)}
-              onDelete={() => handleDeleteQuestion(question.id)}
-              onDeleteAnswer={handleDeleteAnswer}
-              isEditing={isEditing}
-              editedQuestion={editedQuestion}
-              setEditedQuestion={setEditedQuestion}
-              onSubmitEdit={handleUpdateQuestion}
-              onCancelEdit={() => setIsEditing(null)}
-            />
-          ))
-        ) : (
-          <div className='my-2 font-medium'>No questions available for this template.</div>
-        )}
-        <div className={template.questions.length <= 0 ? 'hidden' : ''}>
-          <button type="submit" className="rounded-md text-white font-semibold px-4 py-1 bg-green-600">Submit</button>
-        </div>
-      </form>
-
-      <div className='mt-6'>
-        <h3 className='text-lg font-semibold mb-2'>Comments</h3>
-        <div className='space-y-2 mb-4'>
-          {comments.length > 0 ? comments.map((comment) => (
-            <div key={comment.id} className='p-2'>
-              <p className='font-semibold'>{comment.text}</p>
-              <span className='text-xs text-gray-500'>
-                By {comment.user?.name ? comment.user.name : `User #${comment.userId}`}
-              </span>
-            </div>
-          )) : (
-            <p className='text-sm text-gray-600'>No comments yet.</p>
-          )}
+      <FormSubmission
+        questions={template.questions} answers={answers} setAnswers={setAnswers} handleAnswerUpdate={handleAnswerUpdate}
+        handleSubmit={handleSubmit}
+        handleUpdateQuestion={handleUpdateQuestion} handleEditQuestion={handleEditQuestion} handleDeleteQuestion={handleDeleteQuestion}
+        handleDeleteAnswer={handleDeleteAnswer}
+        isEditing={isEditing} editedQuestion={editedQuestion} setEditedQuestion={setEditedQuestion}
+        setIsEditing={setIsEditing}
+        user={user} isAuthor={isAuthor} isAdmin={isAdmin} darkToggle={darkToggle} />
 
 
-        </div>
-
-        {user && (
-          <div className='flex items-center space-x-2'>
-            <input
-              type='text'
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className='border rounded px-2 py-1 flex-grow'
-              placeholder='Add a comment...'
-            />
-            <button onClick={handleAddComment} className='bg-blue-600 text-white px-3 py-1 rounded'>
-              Post
-            </button>
-          </div>
-        )}
-      </div>
+      <CommentSection comments={comments} setComments={setComments} user={user} templateId={id} />
 
       {(isAuthor || isAdmin) && (
         <>
           {isAuthor && (
-            <div className="mt-6 border-t pt-4">
-              <h3 className="text-lg font-bold mb-2">Manage Access</h3>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const email = e.target.elements.email.value;
-                  try {
-                    await axios.post(
-                      `http://localhost:5000/auth/templates/${id}/allow`,
-                      { email },
-                      {
-                        headers: {
-                          Authorization: `Bearer ${localStorage.getItem('token')}`,
-                        },
-                      }
-                    );
-                    alert(`Access granted to ${email}`);
-                    e.target.reset();
-                  } catch (err) {
-                    console.error('Error adding user:', err);
-                    alert(err.response?.data?.message || 'Failed to add user');
-                  }
-                }}
-                className="flex gap-2 items-center mb-4"
-              >
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Enter user email"
-                  className="border px-3 py-1 rounded flex-grow"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-3 py-1 rounded"
-                >
-                  Allow User
-                </button>
-              </form>
-
-              {template.allowedUsers?.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-1">Allowed Users:</h4>
-                  <ul className="space-y-1">
-                    {template.allowedUsers.map((u) => (
-                      <li key={u.id} className="flex justify-between items-center bg-gray-100 p-2 rounded">
-                        <span>{u.email}</span>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await axios.delete(
-                                `http://localhost:5000/auth/templates/${id}/allow`,
-                                {
-                                  data: { email: u.email },
-                                  headers: {
-                                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                                  },
-                                }
-                              );
-                              alert(`${u.email} removed`);
-                              setTemplate((prev) => ({
-                                ...prev,
-                                allowedUsers: prev.allowedUsers.filter((user) => user.email !== u.email),
-                              }));
-                            } catch (err) {
-                              console.error('Error removing user:', err);
-                              alert(err.response?.data?.message || 'Failed to remove user');
-                            }
-                          }}
-                          className="bg-red-500 text-white px-2 py-1 rounded text-sm"
-                        >
-                          Remove
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <AccessManager template={template} setTemplate={setTemplate} templateId={id} />
           )}
 
-          <TemplateActions
-            isPublic={template.isPublic}
-            toggleVisibility={toggleTemplateVisibility}
-            templateId={id}
-          />
+          <TemplateActions isPublic={template.isPublic} toggleVisibility={toggleTemplateVisibility} templateId={id} />
           <AddQuestionsForm templateId={id} />
         </>
       )}

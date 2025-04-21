@@ -39,38 +39,26 @@ const SignUp = () => {
         <div className='space-y-4'>
           <div>
             <label className="font-semibold">Name</label>
-            <input
-              type="text"
-              className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+            <input className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+              type="text" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
+
           <div>
             <label className="font-semibold">Email</label>
-            <input
-              type="email"
-              className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <input className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+              type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
+
           <div>
             <label className="font-semibold">Password</label>
-            <input
-              type="password"
-              className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <input className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+              type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <div className='flex justify-center mt-4'>
 
+          <div className='flex justify-center mt-4'>
             <button type="submit" className="text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm sm:w-auto px-5 py-2.5">Sign Up</button>
           </div>
+
         </div>
       </form>
     </div>
