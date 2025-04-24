@@ -22,6 +22,14 @@ const FormSubmission = ({
   darkToggle,
 }) => {
   const handleUpdateAnswer = async (answerId, newResponse, questionId) => {
+    // Skip API call if it's a temporary answer
+    if (answerId.startsWith('temp-')) {
+      console.warn('Skipping update for temporary answer:', answerId);
+      // Just update local state instead
+      handleAnswerUpdate(answerId, questionId, newResponse);
+      return true;
+    }
+
     try {
       await axios.put(
         `http://localhost:5000/auth/forms/answers/${answerId}`,
@@ -32,7 +40,7 @@ const FormSubmission = ({
           },
         }
       );
-  
+
       handleAnswerUpdate(answerId, questionId, newResponse);
       return true;
     } catch (err) {
@@ -41,6 +49,7 @@ const FormSubmission = ({
       return false;
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit}>

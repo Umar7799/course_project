@@ -1,34 +1,60 @@
 const { Router } = require('express');
-const bcrypt = require('bcryptjs');
 const prisma = require('../../prisma/client');
-const jwt = require('jsonwebtoken');
 const authMiddleware = require('../../middleware/authMiddleware');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const router = Router();
 
-router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), async (req, res) => {
+// Ensure upload folder exists
+const uploadDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+});
+
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only image files are allowed'), false);
+    }
+};
+
+const upload = multer({ storage, fileFilter });
+
+
+router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.single('image'), async (req, res) => {
     const {
         title,
         description,
         topic,
-        tags,
-        image,
+        tags,  // This will be a string or an array
         isPublic,
-        allowedUsers, // this is an array of emails from frontend
+        allowedUsers,  // This is an array of emails from frontend
     } = req.body;
 
+    // Initialize imagePath after checking if file exists
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
     const adminId = req.user.id;
 
     try {
+        // Check if tags is not undefined or empty, and handle accordingly
+        let tagsArray = [];
+        if (tags) {
+            tagsArray = Array.isArray(tags) ? tags : tags.split(',').map(tag => tag.trim());
+        }
+
         let usersToConnect = [];
 
         if (!isPublic && allowedUsers && allowedUsers.length > 0) {
-            // 🔍 Fetch users by email
             const users = await prisma.user.findMany({
                 where: {
                     email: {
-                        in: allowedUsers, // emails from frontend
+                        in: allowedUsers,
                     },
                 },
             });
@@ -37,7 +63,7 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), async (req, res)
                 return res.status(400).json({ error: 'Some emails are invalid' });
             }
 
-            usersToConnect = users.map(user => ({ id: user.id })); // ✅ get IDs
+            usersToConnect = users.map(user => ({ id: user.id }));
         }
 
         const newTemplate = await prisma.template.create({
@@ -45,9 +71,9 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), async (req, res)
                 title,
                 description,
                 topic,
-                tags,
-                image: image || null,
-                isPublic,
+                tags: tagsArray,  // Use tagsArray here, which is guaranteed to be an array
+                image: imagePath,
+                isPublic: isPublic === 'true',  // Ensure isPublic is a boolean
                 authorId: adminId,
                 allowedUsers: {
                     connect: usersToConnect,
@@ -60,8 +86,11 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), async (req, res)
         console.error('❌ Error creating template:', err);
         res.status(500).json({ error: 'Failed to create template' });
     }
-
 });
+
+
+
+
 
 router.delete('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const templateId = parseInt(req.params.id, 10);

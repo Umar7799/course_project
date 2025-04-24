@@ -16,61 +16,42 @@ const CreateTemplatePage = () => {
   const [allowedUsers, setAllowedUsers] = useState('');
   const [error, setError] = useState('');
 
-  const handleImageUpload = async () => {
-    if (!imageFile) return '';
-
-    const formData = new FormData();
-    formData.append('image', imageFile);
-
-    try {
-      const res = await fetch('http://localhost:5000/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error('Image upload failed');
-
-      const data = await res.json();
-      return data.url;
-    } catch (err) {
-      console.error('Image upload error:', err);
-      return '';
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    let imageUrl = image;
-    if (imageFile) {
-      const uploadedUrl = await handleImageUpload();
-      imageUrl = uploadedUrl || image;
+    const formData = new FormData();
+
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('topic', topic);
+    formData.append('tags', tags);
+    formData.append('isPublic', publicStatus);
+
+    if (!publicStatus && allowedUsers.trim()) {
+      allowedUsers
+        .split(',')
+        .map(email => email.trim())
+        .filter(Boolean)
+        .forEach((email, index) => formData.append(`allowedUsers[${index}]`, email));
     }
 
-    const newTemplate = {
-      title,
-      description,
-      topic,
-      tags: tags.split(',').map(tag => tag.trim()),
-      image: imageUrl,
-      isPublic: publicStatus,
-      allowedUsers: !publicStatus
-        ? allowedUsers.split(',').map(email => email.trim()).filter(Boolean)
-        : [], // only include if private
-    };
+    // Only one of image or imageFile will be active
+    if (imageFile) {
+      formData.append('image', imageFile);
+    } else if (image) {
+      // You could optionally append a URL as text if backend supports it
+      formData.append('image', image);
+    }
 
     try {
       const response = await fetch('http://localhost:5000/auth/createTemplate', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify(newTemplate),
+        body: formData, // Do not use JSON.stringify!
       });
 
       if (!response.ok) throw new Error('Failed to create template');
@@ -83,6 +64,12 @@ const CreateTemplatePage = () => {
       setError('Only admins can create a template');
     }
   };
+
+
+
+
+
+
 
   return (
     <div className={darkToggle ? 'pt-20 bg-gray-500 text-white p-4' : 'pt-20 p-4'}>
@@ -114,17 +101,76 @@ const CreateTemplatePage = () => {
             type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Enter tags" />
         </div>
 
-        <div className='mt-4'>
+        {/* <div className='mt-4'>
           <label className="pl-1 font-semibold">Image URL (optional)</label>
-          <input className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-            type="text" value={image} onChange={(e) => setImage(e.target.value)} placeholder="Paste image URL" />
-        </div>
+
+          <input
+            className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+            type="text"
+            value={image}
+            onChange={(e) => {
+              setImage(e.target.value);
+              if (e.target.value) setImageFile(null); // clear file if URL entered
+            }}
+            placeholder="Paste image URL"
+            disabled={!!imageFile}
+          />
+        </div> */}
 
         <div className='mt-4'>
           <label className='block pl-1 font-semibold'>Or Upload Image</label>
-          <input className='underline p-2.5'
-            type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              setImageFile(e.target.files[0]);
+              if (e.target.files.length > 0) setImage(''); // clear URL if file selected
+            }}
+            disabled={!!image}
+          />
         </div>
+
+
+        {/* Image Preview Section */}
+        {(image || imageFile) && (
+          <div className="mt-4">
+            <label className="pl-1 font-semibold">Preview</label>
+            <div className="flex gap-4 flex-wrap">
+              {/* Display the image from URL if available */}
+              {image && (
+                <div>
+                  <p className="text-sm text-gray-700 mb-1">From URL</p>
+                  <img
+                    src={image}
+                    alt="From URL"
+                    className="w-40 h-auto rounded-md border"
+                    onError={(e) => {
+                      // Fallback in case image URL fails to load
+                      e.target.style.display = 'none';
+                      // Optionally, you can also display a fallback image or message
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Display the image preview for the uploaded file */}
+              {imageFile && (
+                <div>
+                  <p className="text-sm text-gray-700 mb-1">From Upload</p>
+                  <img
+                    src={URL.createObjectURL(imageFile)}
+                    alt="Uploaded"
+                    className="w-40 h-auto rounded-md border"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+
+
+
 
         <div className='mt-4'>
           <label className='pl-1 font-semibold'>

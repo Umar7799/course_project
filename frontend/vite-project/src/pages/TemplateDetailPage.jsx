@@ -87,7 +87,48 @@ const TemplateDetailPage = () => {
     }
 
     try {
-      await axios.post(
+      // Generate temporary IDs that we can reference later
+      const tempAnswerIds = formattedAnswers.map(() => `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+
+      // Optimistic update with complete data including temporary IDs
+      setTemplate(prevTemplate => {
+        if (!prevTemplate) return prevTemplate;
+
+        const updatedQuestions = prevTemplate.questions.map((question, index) => {
+          const answerForQuestion = formattedAnswers.find(a => a.questionId === question.id);
+          if (!answerForQuestion) return question;
+
+          return {
+            ...question,
+            answers: [
+              ...(question.answers || []),
+              {
+                id: tempAnswerIds[index],
+                response: answerForQuestion.response,
+                form: {
+                  userId: user.id,
+                  user: {
+                    id: user.id,
+                    name: user.name || user.email.split('@')[0],
+                    email: user.email
+                  },
+                  id: `temp-form-${Date.now()}` // Temporary form ID
+                },
+                // Flag to identify temporary answers
+                _isTemp: true
+              }
+            ]
+          };
+        });
+
+        return {
+          ...prevTemplate,
+          questions: updatedQuestions
+        };
+      });
+
+      // Make the actual API call
+      const { data } = await axios.post(
         `http://localhost:5000/auth/forms/submit`,
         {
           templateId: parseInt(id),
@@ -100,10 +141,58 @@ const TemplateDetailPage = () => {
         }
       );
 
-      alert('Form submitted successfully!');
       setAnswers({});
+
+      // Replace temporary answers with real ones from the server
+      setTemplate(prevTemplate => {
+        if (!prevTemplate || !data?.answers) return prevTemplate;
+
+        return {
+          ...prevTemplate,
+          questions: prevTemplate.questions.map(question => {
+            // Remove any temporary answers for this question
+            const filteredAnswers = (question.answers || []).filter(a => !a._isTemp);
+
+            // Add the real answers from the server
+            const newAnswers = data.answers
+              .filter(a => a.questionId === question.id)
+              .map(answer => ({
+                id: answer.id,
+                response: answer.response,
+                form: {
+                  id: answer.formId,
+                  userId: user.id,
+                  user: {
+                    id: user.id,
+                    name: user.name || user.email.split('@')[0],
+                    email: user.email
+                  }
+                }
+              }));
+
+            return {
+              ...question,
+              answers: [...filteredAnswers, ...newAnswers]
+            };
+          })
+        };
+      });
+
     } catch (error) {
       console.error('Error submitting form:', error);
+
+      // Roll back optimistic update on error
+      setTemplate(prevTemplate => {
+        if (!prevTemplate) return prevTemplate;
+
+        return {
+          ...prevTemplate,
+          questions: prevTemplate.questions.map(question => ({
+            ...question,
+            answers: (question.answers || []).filter(a => !a._isTemp)
+          }))
+        };
+      });
 
       if (error.response?.status === 400) {
         alert(error.response.data?.message || 'Form submission was invalid.');
@@ -113,33 +202,52 @@ const TemplateDetailPage = () => {
         alert('An unexpected error occurred.');
       }
     }
-
   };
 
 
   const handleDeleteAnswer = async (answerId) => {
     if (!answerId) return;
 
-    try {
-      await axios.delete(`http://localhost:5000/auth/forms/answers/${answerId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      // Clean up local state if needed
-      setAnswers((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((key) => {
-          if (updated[key] === answerId) delete updated[key];
+    // If it's a temporary answer, skip the API call
+    const isTemp = answerId.startsWith('temp-');
+    if (isTemp) {
+      console.warn('Skipping delete for temporary answer:', answerId);
+    } else {
+      try {
+        await axios.delete(`http://localhost:5000/auth/forms/answers/${answerId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
         });
-        return updated;
-      });
-    } catch (error) {
-      console.error('Error deleting answer:', error);
-      alert('Failed to delete your answer.');
+      } catch (error) {
+        console.error('Error deleting answer:', error);
+        alert('Failed to delete your answer.');
+        return;
+      }
     }
+
+    // Optimistic update - remove the answer from all questions
+    setTemplate(prevTemplate => ({
+      ...prevTemplate,
+      questions: prevTemplate.questions.map(question => ({
+        ...question,
+        answers: question.answers?.filter(ans => ans.id !== answerId)
+      }))
+    }));
+
+    // Clean up form answers state by finding which question had this answer
+    setAnswers(prev => {
+      const updated = { ...prev };
+      const questionWithAnswer = template.questions.find(q =>
+        q.answers?.some(a => a.id === answerId)
+      );
+      if (questionWithAnswer?.id && updated[questionWithAnswer.id]) {
+        delete updated[questionWithAnswer.id];
+      }
+      return updated;
+    });
   };
+
 
 
 
@@ -223,15 +331,16 @@ const TemplateDetailPage = () => {
       ...prevTemplate,
       questions: prevTemplate.questions.map(question => ({
         ...question,
-        answers: question.answers?.map(ans => 
+        answers: question.answers?.map(ans =>
           ans.id === answerId ? { ...ans, response: newResponse } : ans
         )
       }))
     }));
-    
+
     // DON'T update the answers state for the input field
     // This prevents the input field from being populated with the edited answer
   };
+
 
 
   if (!template) return <div>Loading template...</div>;
@@ -241,7 +350,7 @@ const TemplateDetailPage = () => {
       {error && <div className="text-red-500 font-semibold mb-4">{error}</div>}
 
       <TemplateHeader title={template.title} description={template.description}
-        image={template.image} likes={likesCount} hasLiked={hasLiked} onLike={handleLikeToggle} />
+         image={template.image} likes={likesCount} hasLiked={hasLiked} onLike={handleLikeToggle} />
 
       <FormSubmission
         questions={template.questions} answers={answers} setAnswers={setAnswers} handleAnswerUpdate={handleAnswerUpdate}

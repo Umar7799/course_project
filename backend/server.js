@@ -6,8 +6,14 @@ const authRoutes = require("./routes/authRoutes");
 const templateRoutes = require('./routes/templates');
 const formRoutes = require("./routes/formRoutes")
 const questionRoutes = require("./routes/questionRoutes")
+const path = require('path');
 
 const app = express();
+
+
+// Serve static files (images) from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // ✅ Middleware order matters!
 app.use(cors({

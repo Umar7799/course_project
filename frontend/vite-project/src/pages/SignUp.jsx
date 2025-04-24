@@ -3,16 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 
-
-
-
-
 const SignUp = () => {
   const { darkToggle } = useAuth();
-
-
-
-
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -26,7 +18,7 @@ const SignUp = () => {
         email,
         password,
       });
-      navigate.push('/login'); // Redirect to login after successful signup
+      navigate('/');
     } catch (error) {
       console.error('Error signing up', error);
     }
