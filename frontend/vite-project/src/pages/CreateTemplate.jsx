@@ -56,18 +56,12 @@ const CreateTemplatePage = () => {
 
       if (!response.ok) throw new Error('Failed to create template');
 
-      const result = await response.json();
-      console.log(result);
       navigate('/dashboard');
     } catch (err) {
       console.error('Error:', err);
       setError('Only admins can create a template');
     }
   };
-
-
-
-
 
 
 
@@ -101,7 +95,7 @@ const CreateTemplatePage = () => {
             type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Enter tags" />
         </div>
 
-        {/* <div className='mt-4'>
+        <div className='mt-4'>
           <label className="pl-1 font-semibold">Image URL (optional)</label>
 
           <input
@@ -115,20 +109,43 @@ const CreateTemplatePage = () => {
             placeholder="Paste image URL"
             disabled={!!imageFile}
           />
-        </div> */}
-
-        <div className='mt-4'>
-          <label className='block pl-1 font-semibold'>Or Upload Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              setImageFile(e.target.files[0]);
-              if (e.target.files.length > 0) setImage(''); // clear URL if file selected
-            }}
-            disabled={!!image}
-          />
         </div>
+
+        {/* Upload Image Section with Drag & Drop */}
+        <div className="mt-4">
+          <label className="block pl-1 font-semibold mb-2">Upload Image</label>
+
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const file = e.dataTransfer.files[0];
+              if (file && file.type.startsWith('image/')) {
+                setImageFile(file);
+                setImage('');
+              }
+            }}
+            className="w-full p-6 border-2 border-dashed rounded-lg border-gray-400 text-center bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <p className="text-sm text-gray-600 mb-2">Drag & drop your image here</p>
+            <p className="text-sm text-gray-600 mb-2">or</p>
+
+            <label className="cursor-pointer inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-md">
+              Choose from device
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  setImageFile(e.target.files[0]);
+                  if (e.target.files.length > 0) setImage('');
+                }}
+                disabled={!!image}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
+
 
 
         {/* Image Preview Section */}
