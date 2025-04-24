@@ -350,7 +350,7 @@ const TemplateDetailPage = () => {
       {error && <div className="text-red-500 font-semibold mb-4">{error}</div>}
 
       <TemplateHeader title={template.title} description={template.description}
-         image={template.image} likes={likesCount} hasLiked={hasLiked} onLike={handleLikeToggle} />
+         images={template.images} likes={likesCount} hasLiked={hasLiked} onLike={handleLikeToggle} />
 
       <FormSubmission
         questions={template.questions} answers={answers} setAnswers={setAnswers} handleAnswerUpdate={handleAnswerUpdate}

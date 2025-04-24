@@ -11,11 +11,13 @@ const router = Router();
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
+// Set up Multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadDir),
     filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 
+// File filter to only allow images
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
@@ -24,10 +26,11 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
+// Multer configuration to accept multiple image uploads
 const upload = multer({ storage, fileFilter });
 
-
-router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.single('image'), async (req, res) => {
+// Route to create template with multiple images
+router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.array('images'), async (req, res) => {
     const {
         title,
         description,
@@ -37,12 +40,13 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.single('i
         allowedUsers,  // This is an array of emails from frontend
     } = req.body;
 
-    // Initialize imagePath after checking if file exists
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+    // Get uploaded images paths
+    const imagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
     const adminId = req.user.id;
 
     try {
-        // Check if tags is not undefined or empty, and handle accordingly
+        // Handle tags as an array
         let tagsArray = [];
         if (tags) {
             tagsArray = Array.isArray(tags) ? tags : tags.split(',').map(tag => tag.trim());
@@ -66,13 +70,14 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.single('i
             usersToConnect = users.map(user => ({ id: user.id }));
         }
 
+        // Create template with multiple images
         const newTemplate = await prisma.template.create({
             data: {
                 title,
                 description,
                 topic,
-                tags: tagsArray,  // Use tagsArray here, which is guaranteed to be an array
-                image: imagePath,
+                tags: tagsArray,  // Store tags as an array
+                images: imagePaths,  // Store multiple images as an array
                 isPublic: isPublic === 'true',  // Ensure isPublic is a boolean
                 authorId: adminId,
                 allowedUsers: {

@@ -115,7 +115,7 @@ router.get('/templates/:id/full', async (req, res) => {
                 title: true,
                 description: true,
                 isPublic: true,
-                image: true,
+                images: true,
                 createdAt: true,
                 authorId: true,
                 questions: {

@@ -30,7 +30,7 @@ model Template {
   createdAt   DateTime   @default(now())
   topic       String?
   tags        String[]
-  image       String?
+  images       String[]
   authorId    Int
   author      User       @relation("AuthorOfTemplate", fields: [authorId], references: [id]) // Specify the opposite relation name
   allowedUsers User[]    @relation("TemplateAccess")
@@ -57,7 +57,7 @@ model Like {
   userId     Int
   user       User     @relation(fields: [userId], references: [id])
   templateId Int
-  template   Template @relation(fields: [templateId], references: [id])
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@unique([userId, templateId]) // 👈 one like per user per template
 }
