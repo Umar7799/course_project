@@ -1,5 +1,4 @@
 import React from 'react';
-import axios from 'axios';
 import QuestionItem from './QuestionItem';
 
 const FormSubmission = ({
@@ -21,36 +20,6 @@ const FormSubmission = ({
   isAdmin,
   darkToggle,
 }) => {
-  const handleUpdateAnswer = async (answerId, newResponse, questionId) => {
-    // Skip API call if it's a temporary answer
-    if (answerId.startsWith('temp-')) {
-      console.warn('Skipping update for temporary answer:', answerId);
-      // Just update local state instead
-      handleAnswerUpdate(answerId, questionId, newResponse);
-      return true;
-    }
-
-    try {
-      await axios.put(
-        `http://localhost:5000/auth/forms/answers/${answerId}`,
-        { response: newResponse },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      handleAnswerUpdate(answerId, questionId, newResponse);
-      return true;
-    } catch (err) {
-      console.error('Error updating answer:', err);
-      alert('Failed to update answer.');
-      return false;
-    }
-  };
-
-
   return (
     <form onSubmit={handleSubmit}>
       {Array.isArray(questions) && questions.length > 0 ? (
@@ -72,9 +41,7 @@ const FormSubmission = ({
             setEditedQuestion={setEditedQuestion}
             onSubmitEdit={handleUpdateQuestion}
             onCancelEdit={() => setIsEditing(null)}
-            onUpdateAnswer={(answerId, newResponse) =>
-              handleUpdateAnswer(answerId, newResponse, question.id)
-            } // 🧠 Add questionId to avoid answer duplication
+            onUpdateAnswer={handleAnswerUpdate}  // Pass down handleAnswerUpdate
           />
         ))
       ) : (
