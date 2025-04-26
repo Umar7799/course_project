@@ -6,14 +6,14 @@ const authMiddleware = require('../../middleware/authMiddleware');
 
 const router = Router();
 
-// Get All Templates (For admins, creators, and users)
 router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
     const { topic } = req.query;
 
     try {
-        const query = {
+        // Base query for templates with necessary relations
+        const baseQuery = {
             select: {
                 id: true,
                 title: true,
@@ -21,50 +21,69 @@ router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
                 createdAt: true,
                 isPublic: true,
                 topic: true,
-
-            },
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                },
+                allowedUsers: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                }
+            }
         };
 
-        // Admin: get everything, apply topic filter if exists
+        // Admin sees all templates
         if (userRole === 'ADMIN') {
-            const adminWhere = topic ? { topic } : {};
             const templates = await prisma.template.findMany({
-                where: adminWhere,
-                select: query.select,
+                ...baseQuery,
+                where: topic ? { topic } : {}
             });
             return res.json(templates);
         }
 
-        // Regular user: see public templates + own templates (even if private)
-        if (userRole === 'USER') {
-            const whereClause = {
+        // Regular user sees:
+        // 1. Public templates
+        // 2. Templates they created
+        // 3. Templates shared with them (allowedUsers)
+        const templatesData = await prisma.template.findMany({
+            ...baseQuery,
+            where: {
                 OR: [
-                    { isPublic: true },
-                    { authorId: userId },
-                    { allowedUsers: { some: { id: userId } } },
+                    { isPublic: true },  // Public templates
+                    { authorId: userId },  // Templates created by the user
+                    {
+                        allowedUsers: {
+                            some: {
+                                id: userId  // Templates shared with the user
+                            }
+                        }
+                    }
                 ],
-            };
-
-            if (topic) {
-                whereClause.AND = [{ topic }];
+                ...(topic && { topic }),  // Filter by topic if provided
             }
+        });
 
-            const templates = await prisma.template.findMany({
-                where: whereClause,
-                select: query.select,
-            });
+        // Apply the filtering in case additional logic is needed
+        const verifiedTemplates = templatesData.filter(template =>
+            template.isPublic || 
+            template.author?.id === userId ||
+            template.allowedUsers?.some(u => u.id === userId)
+        );
 
-            return res.json(templates);
-        }
-
-        // Just in case we somehow fall through
-        return res.status(403).json({ error: 'Unauthorized access' });
-
+        res.json(verifiedTemplates);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Something went wrong' });
+        console.error('Error fetching templates:', error);
+        res.status(500).json({ error: 'Failed to fetch templates' });
     }
 });
+
+
 
 // Get Public Templates (accessible without login)
 router.get('/public/templates', async (req, res) => {
@@ -99,8 +118,13 @@ router.get('/public/templates', async (req, res) => {
 
 
 
+
 // Get a template and its questions + answers + userIds via forms
-router.get('/templates/:id/full', async (req, res) => {
+// Get a template and its questions + answers + userIds via forms
+router.get('/templates/:id/full', authMiddleware('USER', 'ADMIN'), async (req, res) => {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
     const templateId = parseInt(req.params.id, 10);
 
     if (isNaN(templateId)) {
@@ -118,6 +142,12 @@ router.get('/templates/:id/full', async (req, res) => {
                 images: true,
                 createdAt: true,
                 authorId: true,
+                allowedUsers: {
+                    select: {
+                        id: true,
+                        email: true,
+                    },
+                },
                 questions: {
                     select: {
                         id: true,
@@ -161,13 +191,7 @@ router.get('/templates/:id/full', async (req, res) => {
                 },
                 likes: {
                     select: {
-                        userId: true, // 👈 this is key
-                    },
-                },
-                allowedUsers: {
-                    select: {
-                        id: true,
-                        email: true,
+                        userId: true,
                     },
                 },
             },
@@ -177,12 +201,24 @@ router.get('/templates/:id/full', async (req, res) => {
             return res.status(404).json({ error: 'Template not found' });
         }
 
+        // 🛡️ Access control check here
+        const isAuthor = template.authorId === userId;
+        const isPublic = template.isPublic;
+        const isAllowed = template.allowedUsers.some(user => user.id === userId);
+
+        if (!isPublic && !isAuthor && !isAllowed && userRole !== 'ADMIN') {
+            return res.status(403).json({ error: 'You do not have access to this template' });
+        }
+
         return res.json(template);
+
     } catch (error) {
         console.error("❌ Error fetching template with questions and answers:", error);
         return res.status(500).json({ error: 'Server error while retrieving template details' });
     }
 });
+
+
 
 
 router.put('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res) => {
@@ -237,5 +273,6 @@ router.put('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res) =
         return res.status(500).json({ error: 'Something went wrong while updating the template' });
     }
 });
+
 
 module.exports = router;

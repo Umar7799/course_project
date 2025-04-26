@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import Select from 'react-select';
 
 const CreateTemplatePage = () => {
   const { darkToggle } = useAuth();
@@ -13,8 +14,27 @@ const CreateTemplatePage = () => {
   const [image, setImage] = useState('');
   const [imageFiles, setImageFiles] = useState([]);
   const [publicStatus, setPublicStatus] = useState(false);
-  const [allowedUsers, setAllowedUsers] = useState('');
+  const [allowedUsers, setAllowedUsers] = useState([]);
   const [error, setError] = useState('');
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/auth/users', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,16 +47,13 @@ const CreateTemplatePage = () => {
     formData.append('tags', tags);
     formData.append('isPublic', publicStatus);
 
-    if (!publicStatus && allowedUsers.trim()) {
-      allowedUsers
-        .split(',')
-        .map(email => email.trim())
-        .filter(Boolean)
-        .forEach((email, index) => formData.append(`allowedUsers[${index}]`, email));
+    // ✅ Correct way: Send allowedUserEmails (not IDs) 
+    if (!publicStatus && allowedUsers.length > 0) {
+      formData.append('allowedUserEmails', JSON.stringify(allowedUsers));
     }
 
     if (imageFiles.length > 0) {
-      imageFiles.forEach((file) => formData.append(`images`, file)); // backend should accept 'images' array
+      imageFiles.forEach((file) => formData.append('images', file));
     } else if (image) {
       formData.append('image', image);
     }
@@ -51,13 +68,14 @@ const CreateTemplatePage = () => {
       });
 
       if (!response.ok) throw new Error('Failed to create template');
-
       navigate('/dashboard');
     } catch (err) {
       console.error('Error:', err);
       setError('Only admins can create a template');
     }
   };
+
+
 
   const handleFileDrop = (e) => {
     e.preventDefault();
@@ -74,30 +92,31 @@ const CreateTemplatePage = () => {
 
   return (
     <div className={darkToggle ? 'pt-20 bg-gray-500 text-white p-4' : 'pt-20 p-4'}>
-      <h2 className='text-xl font-semibold'>Create New Template</h2>
-      <form onSubmit={handleSubmit}>
+      <h2 className="text-2xl font-bold mb-6">Create New Template</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && <p className="text-red-500">{error}</p>}
 
-        {/* Title, Description, Topic, Tags */}
-        <div className='mt-4'>
+        <div>
           <label className="pl-1 font-semibold">Title</label>
-          <input className="input-style" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-        </div>
-        <div className='mt-4'>
-          <label className="pl-1 font-semibold">Description</label>
-          <textarea className="input-style" value={description} onChange={(e) => setDescription(e.target.value)} />
-        </div>
-        <div className='mt-4'>
-          <label className="pl-1 font-semibold">Topic</label>
-          <input className="input-style" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} />
-        </div>
-        <div className='mt-4'>
-          <label className="pl-1 font-semibold">Tags</label>
-          <input className="input-style" type="text" value={tags} onChange={(e) => setTags(e.target.value)} />
+          <input className="input-style" type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
 
-        {/* Image URL (optional) */}
-        <div className='mt-4'>
+        <div>
+          <label className="pl-1 font-semibold">Description</label>
+          <textarea className="input-style" value={description} onChange={(e) => setDescription(e.target.value)} required />
+        </div>
+
+        <div>
+          <label className="pl-1 font-semibold">Topic</label>
+          <input className="input-style" type="text" value={topic} onChange={(e) => setTopic(e.target.value)} required />
+        </div>
+
+        <div>
+          <label className="pl-1 font-semibold">Tags (comma separated)</label>
+          <input className="input-style" type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="example: ai,education,fun" />
+        </div>
+
+        <div>
           <label className="pl-1 font-semibold">Image URL (optional)</label>
           <input
             className="input-style"
@@ -108,12 +127,11 @@ const CreateTemplatePage = () => {
               if (e.target.value) setImageFiles([]);
             }}
             disabled={imageFiles.length > 0}
-            placeholder="Paste image URL"
+            placeholder="Paste image URL here..."
           />
         </div>
 
-        {/* Drag & Drop Upload */}
-        <div className="mt-4">
+        <div>
           <label className="block pl-1 font-semibold mb-2">Upload Images</label>
           <div
             onDragOver={(e) => e.preventDefault()}
@@ -136,11 +154,10 @@ const CreateTemplatePage = () => {
           </div>
         </div>
 
-        {/* Previews */}
         {(image || imageFiles.length > 0) && (
-          <div className="mt-4">
+          <div>
             <label className="pl-1 font-semibold">Preview</label>
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-4 flex-wrap mt-2">
               {image && (
                 <div>
                   <p className="text-sm text-gray-700 mb-1">From URL</p>
@@ -157,39 +174,49 @@ const CreateTemplatePage = () => {
           </div>
         )}
 
-        {/* Public + Allowed Users */}
-        <div className='mt-4'>
-          <label className='pl-1 font-semibold'>
+        <div>
+          <label className="pl-1 font-semibold">
             Public
-            <input className='ml-2' type="checkbox" checked={publicStatus} onChange={() => setPublicStatus(!publicStatus)} />
+            <input className="ml-2" type="checkbox" checked={publicStatus} onChange={() => setPublicStatus(!publicStatus)} />
           </label>
         </div>
 
         {!publicStatus && (
-          <div className='mt-4'>
-            <label className="pl-1 font-semibold">Allowed Users (Emails)</label>
-            <input className="input-style" type="text" value={allowedUsers} onChange={(e) => setAllowedUsers(e.target.value)} />
+          <div>
+            <label className="pl-1 font-semibold mb-1 block">Allowed Users (Select multiple)</label>
+            <Select
+              isMulti
+              isClearable
+              options={users.map((user) => ({
+                value: user.email,
+                label: user.email,
+              }))}
+              value={allowedUsers.map(email => ({ value: email, label: email }))}
+              onChange={(selected) => setAllowedUsers(selected.map(opt => opt.value))}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Select users allowed to access..."
+            />
           </div>
         )}
 
-        <button className='mt-6 bg-green-600 font-semibold text-white py-2 px-4 rounded-md' type="submit">
+        <button className="mt-6 bg-green-600 hover:bg-green-700 font-semibold text-white py-2 px-4 rounded-md transition" type="submit">
           Create Template
         </button>
       </form>
 
-      {/* Utility class */}
       <style>{`
-        .input-style {
-          background-color: #f9fafb;
-          display: block;
-          width: 100%;
-          border: 1px solid #d1d5db;
-          color: #111827;
-          font-size: 0.875rem;
-          border-radius: 0.5rem;
-          padding: 0.625rem;
-        }
-      `}</style>
+.input-style {
+  background-color: #f9fafb;
+  display: block;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  color: #111827;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  padding: 0.625rem;
+}
+`}</style>
     </div>
   );
 };

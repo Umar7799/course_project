@@ -16,7 +16,8 @@ const QuestionItem = ({
   editedQuestion,
   setEditedQuestion,
   onSubmitEdit,
-  onCancelEdit
+  onCancelEdit,
+  showSubmit,
 }) => {
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editedAnswer, setEditedAnswer] = useState('');
@@ -27,9 +28,9 @@ const QuestionItem = ({
 
   const handleSaveAnswer = async (answerId) => {
     if (!editedAnswer.trim()) return;
-  
+
     const success = await onUpdateAnswer(answerId, editedAnswer, question.id);
-    
+
     if (success) {
       setEditingAnswerId(null);
       setEditedAnswer('');
@@ -64,13 +65,11 @@ const QuestionItem = ({
         ) : (
           <>
             <label className='font-semibold'>{question.text}</label>
-            <input
-              className="bg-gray-50 my-2 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-              type="text"
-              value={answer}
-              onChange={handleChange}
-              placeholder='Your answer'
-            />
+            <input className="bg-gray-50 my-2 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+              type="text" value={answer} onChange={handleChange} placeholder='Your answer' />
+            {showSubmit && (
+              <button className="mt-2 bg-green-600 text-white px-4 py-1 rounded-md" type="submit">Submit</button>
+            )}
           </>
         )}
       </div>

@@ -6,6 +6,9 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const router = Router();
 
+
+
+
 // SignUp Route
 router.post('/signup', async (req, res) => {
     const { name, email, password } = req.body;
@@ -86,7 +89,7 @@ router.get('/profile', authMiddleware('USER', 'ADMIN'), async (req, res) => {
 });
 
 // Get All Users (Only accessible by admins)
-router.get('/users', authMiddleware('ADMIN'), async (req, res) => {
+router.get('/users', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     try {
         const users = await prisma.user.findMany({
             select: { id: true, name: true, email: true }
@@ -98,6 +101,9 @@ router.get('/users', authMiddleware('ADMIN'), async (req, res) => {
         return res.status(500).json({ error: 'Server error' });
     }
 });
+
+
+
 
 // Route for Admins to Promote Users
 router.put('/promote/:userId', authMiddleware('ADMIN'), async (req, res) => {

@@ -5,11 +5,12 @@ import { useAuth } from '../context/useAuth';
 
 const TemplatesPage = () => {
   const [templates, setTemplates] = useState([]);
+  const [filteredTemplates, setFilteredTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [topics, setTopics] = useState([]);
-  const { darkToggle } = useAuth();
+  const { darkToggle, user } = useAuth();
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -35,54 +36,139 @@ const TemplatesPage = () => {
 
         const templatesData = response.data;
 
-        // Extract unique topics
-        const uniqueTopics = [...new Set(templatesData.map(t => t.topic))];
+        const uniqueTopics = [...new Set(templatesData.map(t => t.topic).filter(Boolean))];
         setTopics(uniqueTopics);
 
-        setTemplates(templatesData);
+        if (isAuthenticated) {
+          const verifiedTemplates = templatesData.filter(template => 
+            template.isPublic || 
+            template.author?.id === user?.id ||
+            template.allowedUsers?.some(u => u.id === user?.id)
+          );
+          setTemplates(verifiedTemplates);
+          setFilteredTemplates(verifiedTemplates);
+        } else {
+          setTemplates(templatesData);
+          setFilteredTemplates(templatesData);
+        }
       } catch (err) {
         console.error('Error fetching templates:', err);
-        setError('Error loading templates.');
+        setError('Error loading templates. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchTemplates();
-  }, [selectedTopic]);
+  }, [selectedTopic, user?.id]);
 
-  if (loading) return <div>Loading templates...</div>;
-  if (error) return <div className="alert alert-danger">{error}</div>;
+  const handleSearch = (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    if (searchTerm === '') {
+      setFilteredTemplates(templates);
+    } else {
+      setFilteredTemplates(templates.filter(template => 
+        template.title.toLowerCase().includes(searchTerm) ||
+        template.description.toLowerCase().includes(searchTerm) ||
+        template.topic?.toLowerCase().includes(searchTerm)
+      ));
+    }
+  };
+
+  if (loading) return (
+    <div className={darkToggle ? "p-4 bg-gray-800 text-white pt-20" : "p-4 pt-20"}>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className={darkToggle ? "p-4 bg-gray-800 text-white pt-20" : "p-4 pt-20"}>
+      <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+        <p>{error}</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className={darkToggle ? "p-4 bg-gray-400 pt-20" : "p-4 pt-20"}>
-      <h2 className='text-xl font-semibold'>Templates</h2>
+    <div className={darkToggle ? "p-4 bg-gray-800 text-white pt-20" : "p-4 pt-20"}>
+      <h2 className='text-2xl font-bold mb-6'>Templates</h2>
 
-      {/* Topic Filter */}
-      <div className="my-3">
-        <label htmlFor="topicSelect" className="pl-1 text-sm font-semibold">Filter by Topic</label>
-        <select className="bg-gray-50 block w-80 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-          id="topicSelect" value={selectedTopic} onChange={(e) => setSelectedTopic(e.target.value)}>
-          <option value="">All Topics</option>
-          {topics.map((topic, idx) => (
-            <option key={idx} value={topic}>{topic}</option>
-          ))}
-        </select>
+      {/* Search and Filter Section */}
+      <div className="mb-6 space-y-4">
+        <div>
+          <label htmlFor="search" className="block text-sm font-medium mb-1">Search Templates</label>
+          <input
+            type="text"
+            id="search"
+            placeholder="Search by title, description or topic..."
+            className="w-full p-2 border rounded-lg"
+            onChange={handleSearch}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="topicSelect" className="block text-sm font-medium mb-1">Filter by Topic</label>
+          <select
+            className="w-full p-2 border rounded-lg bg-white"
+            id="topicSelect"
+            value={selectedTopic}
+            onChange={(e) => setSelectedTopic(e.target.value)}
+          >
+            <option value="">All Topics</option>
+            {topics.map((topic, idx) => (
+              <option key={idx} value={topic}>{topic || 'Untagged'}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {templates.length > 0 ? (
-          templates.map(template => (
-            <Link key={template.id} to={`/templates/${template.id}`}>
-              <div className={darkToggle ? 'shadow-lg text-white bg-gray-800 p-4 rounded-lg font-semibold' : 'border border-gray-800 shadow-lg p-4 rounded-lg font-semibold'}>
-                <h1 className='text-lg'>{template.title}</h1>
-                <p>{template.description}</p>
-                <small>Created on: {new Date(template.createdAt).toLocaleDateString()}</small>
+      {/* Templates Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredTemplates.length > 0 ? (
+          filteredTemplates.map(template => (
+            <Link 
+              key={template.id} 
+              to={`/templates/${template.id}`}
+              className="hover:shadow-lg transition-shadow duration-200"
+            >
+              <div className={`h-full rounded-lg overflow-hidden shadow-md ${
+                darkToggle 
+                  ? 'bg-gray-700 text-white' 
+                  : 'bg-white border border-gray-200'
+              }`}>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold mb-2">{template.title}</h3>
+                  <p className="text-sm mb-3">{template.description}</p>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className={`px-2 py-1 rounded ${
+                      darkToggle ? 'bg-gray-600' : 'bg-gray-100'
+                    }`}>
+                      {template.topic || 'General'}
+                    </span>
+                    <span>
+                      {new Date(template.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {!template.isPublic && (
+                    <div className="mt-2 text-xs">
+                      <span className="text-yellow-500">Private</span>
+                      {template.allowedUsers?.length > 0 && (
+                        <span className="ml-2 text-gray-400">
+                          Shared with {template.allowedUsers.length} user(s)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </Link>
           ))
         ) : (
-          <p>No templates found.</p>
+          <div className="col-span-full text-center py-8">
+            <p className="text-lg">No templates found matching your criteria.</p>
+          </div>
         )}
       </div>
     </div>

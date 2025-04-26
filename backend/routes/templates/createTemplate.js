@@ -7,17 +7,15 @@ const fs = require('fs');
 
 const router = Router();
 
-// Ensure upload folder exists
+// Keep your existing multer configuration
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// Set up Multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadDir),
     filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 
-// File filter to only allow images
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
@@ -26,73 +24,86 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-// Multer configuration to accept multiple image uploads
 const upload = multer({ storage, fileFilter });
 
-// Route to create template with multiple images
+
+
+
+
 router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.array('images'), async (req, res) => {
     const {
         title,
         description,
         topic,
-        tags,  // This will be a string or an array
-        isPublic,
-        allowedUsers,  // This is an array of emails from frontend
+        tags,
+        isPublic: isPublicRaw,
+        allowedUserEmails: allowedUserEmailsJson
     } = req.body;
 
-    // Get uploaded images paths
-    const imagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const isPublic = isPublicRaw === 'true'; // 👈 properly parsed early
 
-    const adminId = req.user.id;
+    const imagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const authorId = req.user.id;
 
     try {
-        // Handle tags as an array
         let tagsArray = [];
         if (tags) {
             tagsArray = Array.isArray(tags) ? tags : tags.split(',').map(tag => tag.trim());
         }
 
         let usersToConnect = [];
+        if (!isPublic && allowedUserEmailsJson) {  // 👈 now works correctly
+            const allowedUserEmails = JSON.parse(allowedUserEmailsJson);
 
-        if (!isPublic && allowedUsers && allowedUsers.length > 0) {
-            const users = await prisma.user.findMany({
+            const existingUsers = await prisma.user.findMany({
                 where: {
-                    email: {
-                        in: allowedUsers,
-                    },
-                },
+                    email: { in: allowedUserEmails }
+                }
             });
 
-            if (users.length !== allowedUsers.length) {
-                return res.status(400).json({ error: 'Some emails are invalid' });
-            }
-
-            usersToConnect = users.map(user => ({ id: user.id }));
+            usersToConnect = existingUsers.map(user => ({ id: user.id }));
         }
 
-        // Create template with multiple images
         const newTemplate = await prisma.template.create({
             data: {
                 title,
                 description,
                 topic,
-                tags: tagsArray,  // Store tags as an array
-                images: imagePaths,  // Store multiple images as an array
-                isPublic: isPublic === 'true',  // Ensure isPublic is a boolean
-                authorId: adminId,
+                tags: tagsArray,
+                images: imagePaths,
+                isPublic,
+                authorId,
                 allowedUsers: {
-                    connect: usersToConnect,
-                },
+                    connect: usersToConnect
+                }
             },
+            include: {
+                allowedUsers: {
+                    select: {
+                        id: true,
+                        email: true
+                    }
+                }
+            }
         });
 
         res.status(201).json({ success: true, template: newTemplate });
     } catch (err) {
-        console.error('❌ Error creating template:', err);
+        console.error('Error creating template:', err);
+
+        if (req.files) {
+            req.files.forEach(file => {
+                try {
+                    fs.unlinkSync(path.join(uploadDir, file.filename));
+                } catch (cleanupErr) {
+                    console.error('Error cleaning up file:', cleanupErr);
+                }
+            });
+        }
+
         res.status(500).json({ error: 'Failed to create template' });
     }
 });
-
 
 
 
@@ -125,4 +136,12 @@ router.delete('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res
     }
 });
 
+
+
+
+
 module.exports = router;
+
+
+
+

@@ -23,7 +23,7 @@ const FormSubmission = ({
   return (
     <form onSubmit={handleSubmit}>
       {Array.isArray(questions) && questions.length > 0 ? (
-        questions.map((question) => (
+        questions.map((question, index) => (
           <QuestionItem
             key={question.id}
             question={question}
@@ -41,17 +41,18 @@ const FormSubmission = ({
             setEditedQuestion={setEditedQuestion}
             onSubmitEdit={handleUpdateQuestion}
             onCancelEdit={() => setIsEditing(null)}
-            onUpdateAnswer={handleAnswerUpdate}  // Pass down handleAnswerUpdate
+            onUpdateAnswer={handleAnswerUpdate}
+            showSubmit={index === 0 && questions.length > 0}
           />
         ))
       ) : (
         <div className="my-2 font-medium">No questions available for this template.</div>
       )}
-      <div className={questions.length <= 0 ? 'hidden' : ''}>
+      {/* <div className={questions.length <= 0 ? 'hidden' : ''}>
         <button type="submit" className="rounded-md text-white font-semibold px-4 py-1 bg-green-600">
           Submit
         </button>
-      </div>
+      </div> */}
     </form>
   );
 };

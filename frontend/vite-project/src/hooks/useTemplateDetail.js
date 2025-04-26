@@ -12,7 +12,11 @@ export default function useTemplateDetail(id, user) {
   useEffect(() => {
     const fetchTemplate = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/auth/templates/${id}/full`);
+        const response = await axios.get(`http://localhost:5000/auth/templates/${id}/full`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          }
+        });
         setTemplate(response.data);
         setLikesCount(response.data.likes?.length || 0);
         setHasLiked(response.data.likes?.some((like) => like.userId === user?.id));
