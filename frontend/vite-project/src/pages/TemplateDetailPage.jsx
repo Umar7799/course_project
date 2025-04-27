@@ -78,7 +78,7 @@ const TemplateDetailPage = () => {
         setIsEditing={setIsEditing}
         user={user}
         isAuthor={user?.id === template.authorId}
-        isAdmin={user?.role === 'admin'}
+        isAdmin={user?.role === 'ADMIN'}
         darkToggle={darkToggle}
       />
 
@@ -90,11 +90,9 @@ const TemplateDetailPage = () => {
         templateId={id}
       />
 
-      {(user?.id === template.authorId || user?.role === 'admin') && (
+      {(user?.id === template.authorId || user?.role === 'ADMIN') && (
         <>
-          {user?.id === template.authorId && (
             <AccessManager template={template} setTemplate={setTemplate} templateId={id} />
-          )}
 
           <TemplateActions
             isPublic={template.isPublic}

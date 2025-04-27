@@ -5,13 +5,23 @@ const prisma = new PrismaClient();
 const authMiddleware = (...allowedRoles) => {
     return async (req, res, next) => {
         try {
-            const authHeader = req.headers.authorization;
+            let token;
 
-            if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            // First, check Authorization header
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith("Bearer ")) {
+                token = authHeader.split(" ")[1];
+            }
+
+            // If no token in header, try cookies
+            if (!token && req.cookies?.token) {
+                token = req.cookies.token;
+            }
+
+            if (!token) {
                 return res.status(401).json({ message: "No token provided" });
             }
 
-            const token = authHeader.split(" ")[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             console.log("✅ Decoded JWT:", decoded);
 
@@ -32,19 +42,15 @@ const authMiddleware = (...allowedRoles) => {
             const templateId = parseInt(req.params.templateId || id);
             const questionId = parseInt(req.params.questionId || id);
 
-            // ✅ Ensure valid template lookup before role check
+            // Ownership checks
             if (!isNaN(templateId)) {
                 const template = await prisma.template.findUnique({
                     where: { id: templateId },
                 });
 
-                if (template) {
-                    if (template.authorId === user.id) {
-                        bypassRoleCheck = true;
-                        console.log("✅ User is the author of this template.");
-                    }
-                } else {
-                    console.warn("⚠️ Template not found for ID:", templateId);
+                if (template && template.authorId === user.id) {
+                    bypassRoleCheck = true;
+                    console.log("✅ User is the author of this template.");
                 }
             }
 

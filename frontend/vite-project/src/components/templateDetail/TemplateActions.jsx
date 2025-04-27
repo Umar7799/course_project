@@ -23,7 +23,7 @@ const TemplateActions = ({ isPublic, toggleVisibility, templateId, darkToggle })
     <div className={darkToggle
       ? "mt-2 font-semibold border rounded-lg p-4 border-gray-800 shadow bg-gray-800"
       : "mt-2 font-semibold border rounded-lg p-4 border-gray-400 shadow bg-gray-400"}>
-      <h1 className="font-semibold mb-2">Only author can have these buttons</h1>
+      <h1 className="font-semibold mb-2">Only author or admin can have these buttons</h1>
       <div className='flex space-x-2'>
         <button onClick={toggleVisibility}
           className={`font-semibold px-4 py-2 rounded-md transition text-white ${isPublic ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700'}`}>

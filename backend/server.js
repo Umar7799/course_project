@@ -6,6 +6,9 @@ const authRoutes = require("./routes/authRoutes");
 const templateRoutes = require('./routes/templates');
 const formRoutes = require("./routes/formRoutes")
 const questionRoutes = require("./routes/questionRoutes")
+const promoteUsers = require("./routes/promoteUsers")
+const cookieParser = require('cookie-parser');
+
 const path = require('path');
 
 const app = express();
@@ -14,6 +17,7 @@ const app = express();
 // Serve static files (images) from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+app.use(cookieParser());
 
 // ✅ Middleware order matters!
 app.use(cors({
@@ -32,6 +36,8 @@ app.use("/auth", templateRoutes);
 app.use("/auth", formRoutes);
 
 app.use("/auth", questionRoutes);
+
+app.use("/auth", promoteUsers);
 
 
 app.get("/", (req, res) => {
