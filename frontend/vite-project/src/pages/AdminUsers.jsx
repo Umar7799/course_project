@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+
+
+
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
+
+
 
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem('token');  // Get token from localStorage
+            const token = localStorage.getItem('token');
 
             const response = await axios.get('http://localhost:5000/auth/allUsers', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
-                withCredentials: true, // optional (in case you need cookies too)
+                withCredentials: true,
             });
 
             setUsers(response.data);
@@ -26,7 +33,7 @@ const AdminUsers = () => {
 
     const promoteToAdmin = async (userId) => {
         try {
-            const token = localStorage.getItem('token'); // ✅
+            const token = localStorage.getItem('token');
 
             await axios.post('http://localhost:5000/auth/promoteUser',
                 { userId },
@@ -39,12 +46,91 @@ const AdminUsers = () => {
             );
 
             alert("✅ User promoted successfully!");
-            fetchUsers(); // Refresh list
+            fetchUsers();
         } catch (error) {
             console.error("Error promoting user:", error);
             alert("❌ Failed to promote user.");
         }
     };
+
+    const deleteUser = async (userId) => {
+        if (!window.confirm('⚠️ Are you sure you want to delete this user?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+
+            await axios.delete(`http://localhost:5000/auth/deleteUser/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                withCredentials: true,
+            });
+
+            alert('✅ User deleted successfully!');
+            fetchUsers();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('❌ Failed to delete user.');
+        }
+    };
+
+
+    const selfDemote = async () => {
+        if (!window.confirm('⚠️ Are you sure you want to remove your admin rights?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+
+            await axios.post('http://localhost:5000/auth/selfDemote', {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                withCredentials: true,
+            });
+
+            alert("✅ You are now a regular user!");
+            window.location.reload(); // Or navigate to a different page
+        } catch (error) {
+            console.error("Error self-demoting:", error);
+            alert("❌ Failed to self-demote.");
+        }
+    };
+
+
+    const demoteUser = async (userId) => {
+        if (!window.confirm('⚠️ Are you sure you want to demote this admin to a user?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+
+            await axios.post('http://localhost:5000/auth/demoteUser',
+                { userId },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    withCredentials: true,
+                }
+            );
+
+            alert("✅ User demoted successfully!");
+            fetchUsers();
+        } catch (error) {
+            console.error("Error demoting user:", error);
+            alert("❌ Failed to demote user.");
+        }
+    };
+
+
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const decoded = jwtDecode(token);
+            setCurrentUser(decoded);
+        }
+    }, []);
+
 
     useEffect(() => {
         fetchUsers();
@@ -56,7 +142,7 @@ const AdminUsers = () => {
 
     return (
         <div className="p-8 mt-14">
-            <h1 className="text-3xl font-bold mb-6 text-center">👑 Promote Users to Admin</h1>
+            <h1 className="text-3xl font-bold mb-6 text-center">👑 Manage Users</h1>
 
             <div className="overflow-x-auto">
                 <table className="min-w-full bg-white rounded-lg shadow-md">
@@ -74,17 +160,42 @@ const AdminUsers = () => {
                                 <td className="py-3 px-6">{user.name}</td>
                                 <td className="py-3 px-6">{user.email}</td>
                                 <td className="py-3 px-6">{user.role}</td>
-                                <td className="py-3 px-6 text-center">
+                                <td className="py-3 px-6 text-center space-x-2">
                                     {user.role !== 'ADMIN' ? (
-                                        <button
-                                            onClick={() => promoteToAdmin(user.id)}
-                                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
-                                        >
-                                            Promote
-                                        </button>
+                                        <>
+                                            <button
+                                                onClick={() => promoteToAdmin(user.id)}
+                                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+                                            >
+                                                Promote
+                                            </button>
+                                            <button
+                                                onClick={() => deleteUser(user.id)}
+                                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
+                                            >
+                                                Delete
+                                            </button>
+                                        </>
                                     ) : (
-                                        <span className="text-green-600 font-semibold">Already Admin</span>
+                                        <>
+                                            {currentUser?.id === user.id ? (
+                                                <button
+                                                    onClick={selfDemote}
+                                                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md"
+                                                >
+                                                    Self Demote
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => demoteUser(user.id)}
+                                                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md"
+                                                >
+                                                    Demote
+                                                </button>
+                                            )}
+                                        </>
                                     )}
+
                                 </td>
                             </tr>
                         ))}
