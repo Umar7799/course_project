@@ -49,6 +49,7 @@ const TemplateDetailPage = () => {
 
   if (!template) return <div>Loading template...</div>;
 
+
   return (
     <div className={darkToggle ? "mt-2 p-4 pt-20 bg-gray-500 text-white" : "mt-2 p-4 pt-20"}>
       {error && <div className="text-red-500 font-semibold mb-4">{error}</div>}
@@ -63,7 +64,7 @@ const TemplateDetailPage = () => {
       />
 
       <FormSubmission
-        questions={template.questions}
+        questions={(template?.questions || []).filter(q => q !== undefined)}  // Filter out undefined values
         answers={answers}
         setAnswers={setAnswers}
         handleSubmit={handleSubmit}
@@ -92,14 +93,14 @@ const TemplateDetailPage = () => {
 
       {(user?.id === template.authorId || user?.role === 'ADMIN') && (
         <>
-            <AccessManager template={template} setTemplate={setTemplate} templateId={id} />
+          <AccessManager template={template} setTemplate={setTemplate} templateId={id} />
 
           <TemplateActions
             isPublic={template.isPublic}
             toggleVisibility={toggleTemplateVisibility}
             templateId={id}
           />
-          <AddQuestionsForm templateId={id} />
+          <AddQuestionsForm templateId={id} setTemplate={setTemplate} />
         </>
       )}
     </div>

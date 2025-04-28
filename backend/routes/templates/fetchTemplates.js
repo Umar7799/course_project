@@ -71,7 +71,7 @@ router.get('/templates', authMiddleware('USER', 'ADMIN'), async (req, res) => {
 
         // Apply the filtering in case additional logic is needed
         const verifiedTemplates = templatesData.filter(template =>
-            template.isPublic || 
+            template.isPublic ||
             template.author?.id === userId ||
             template.allowedUsers?.some(u => u.id === userId)
         );
@@ -117,9 +117,6 @@ router.get('/public/templates', async (req, res) => {
 });
 
 
-
-
-// Get a template and its questions + answers + userIds via forms
 // Get a template and its questions + answers + userIds via forms
 router.get('/templates/:id/full', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     const userId = req.user.id;
@@ -152,6 +149,7 @@ router.get('/templates/:id/full', authMiddleware('USER', 'ADMIN'), async (req, r
                     select: {
                         id: true,
                         text: true,
+                        description: true,
                         type: true,
                         answers: {
                             select: {
@@ -210,6 +208,13 @@ router.get('/templates/:id/full', authMiddleware('USER', 'ADMIN'), async (req, r
             return res.status(403).json({ error: 'You do not have access to this template' });
         }
 
+        return res.json(template);
+
+
+        // Log the template object to inspect it before returning it
+        console.log(template); // <-- Add this log to inspect the structure
+
+        // Send the response containing the template data
         return res.json(template);
 
     } catch (error) {

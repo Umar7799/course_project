@@ -17,6 +17,7 @@ const CreateTemplatePage = () => {
   const [allowedUsers, setAllowedUsers] = useState([]);
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
+  const [questions, setQuestions] = useState([{ text: '', description: '', type: 'SINGLE_LINE' }]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -47,6 +48,9 @@ const CreateTemplatePage = () => {
     formData.append('tags', tags);
     formData.append('isPublic', publicStatus);
 
+    // Send questions as a JSON string
+    formData.append('questions', JSON.stringify(questions));
+
     // ✅ Correct way: Send allowedUserEmails (not IDs) 
     if (!publicStatus && allowedUsers.length > 0) {
       formData.append('allowedUserEmails', JSON.stringify(allowedUsers));
@@ -75,8 +79,6 @@ const CreateTemplatePage = () => {
     }
   };
 
-
-
   const handleFileDrop = (e) => {
     e.preventDefault();
     const droppedFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
@@ -88,6 +90,32 @@ const CreateTemplatePage = () => {
     const selectedFiles = Array.from(e.target.files);
     setImageFiles(prev => [...prev, ...selectedFiles]);
     setImage('');
+  };
+
+  const handleQuestionChange = (index, field, value) => {
+    const newQuestions = [...questions];
+    newQuestions[index][field] = value;
+    setQuestions(newQuestions);
+  };
+
+  const handleAddQuestion = () => {
+    setQuestions([...questions, { text: '', description: '', type: 'SINGLE_LINE' }]);
+  };
+
+  const handleRemoveQuestion = (index) => {
+    const newQuestions = questions.filter((_, i) => i !== index);
+    setQuestions(newQuestions);
+  };
+
+  const questionTypes = ['SINGLE_LINE', 'MULTI_LINE', 'INTEGER', 'CHECKBOX']; // List of valid types
+
+  const handleQuestionTypeChange = (index, selectedOption) => {
+    const newType = selectedOption ? selectedOption.value : ''; // Get value from selectedOption
+    setQuestions(prevQuestions => {
+      const updatedQuestions = [...prevQuestions];
+      updatedQuestions[index].type = newType;
+      return updatedQuestions;
+    });
   };
 
   return (
@@ -154,25 +182,37 @@ const CreateTemplatePage = () => {
           </div>
         </div>
 
-        {(image || imageFiles.length > 0) && (
-          <div>
-            <label className="pl-1 font-semibold">Preview</label>
-            <div className="flex gap-4 flex-wrap mt-2">
-              {image && (
-                <div>
-                  <p className="text-sm text-gray-700 mb-1">From URL</p>
-                  <img src={image} alt="From URL" className="w-40 h-auto rounded-md border" />
-                </div>
-              )}
-              {imageFiles.map((file, idx) => (
-                <div key={idx}>
-                  <p className="text-sm text-gray-700 mb-1">Upload {idx + 1}</p>
-                  <img src={URL.createObjectURL(file)} alt={`Upload ${idx + 1}`} className="w-40 h-auto rounded-md border" />
-                </div>
-              ))}
+        {/* Questions Section */}
+        <div>
+          <label className="pl-1 font-semibold">Questions</label>
+          {questions.map((question, index) => (
+            <div key={index} className="mb-4">
+              <input
+                className="input-style"
+                type="text"
+                placeholder="Question Text"
+                value={question.text}
+                onChange={(e) => handleQuestionChange(index, 'text', e.target.value)}
+                required
+              />
+              <textarea
+                className="input-style"
+                placeholder="Question Description"
+                value={question.description}
+                onChange={(e) => handleQuestionChange(index, 'description', e.target.value)}
+              />
+              <Select
+                value={question.type ? { value: question.type, label: question.type } : null} // Updated value format
+                onChange={(selectedOption) => handleQuestionTypeChange(index, selectedOption)}
+                options={questionTypes.map(type => ({ value: type, label: type }))}
+                className="react-select-container"
+                classNamePrefix="react-select"
+              />
+              <button type="button" onClick={() => handleRemoveQuestion(index)} className="text-red-500">Remove</button>
             </div>
-          </div>
-        )}
+          ))}
+          <button type="button" onClick={handleAddQuestion} className="text-blue-500">Add Question</button>
+        </div>
 
         <div>
           <label className="pl-1 font-semibold">

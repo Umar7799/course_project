@@ -20,6 +20,7 @@ const FormSubmission = ({
   isAdmin,
   darkToggle,
 }) => {
+
   return (
     <form onSubmit={handleSubmit}>
       {Array.isArray(questions) && questions.length > 0 ? (

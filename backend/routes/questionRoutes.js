@@ -8,102 +8,70 @@ const router = Router();
 
 
 
-// Add a Question to a Template (Admin Only)
 router.post('/templates/:id/questions', authMiddleware('ADMIN', 'AUTHOR'), async (req, res) => {
-    const { text, type } = req.body;
+    const { text, type, description } = req.body; // 👈 include description
     const templateId = parseInt(req.params.id, 10);
 
-    console.log("Request Params:", req.params);         // 🔍 Debugging
-    console.log("Parsed Template ID:", templateId);     // 🔍 Debugging
-    console.log("Request Body:", req.body);             // 🔍 Debugging
-
-    // ✅ Validate Template ID
-    if (isNaN(templateId)) {
-        return res.status(400).json({ error: "Invalid template ID in URL." });
-    }
-
-    // ✅ Validate input fields
     if (!text || !type) {
         return res.status(400).json({ error: "Text and type are required" });
     }
 
     try {
-        // ✅ Check if the template exists
         const template = await prisma.template.findUnique({ where: { id: templateId } });
-        if (!template) {
-            return res.status(404).json({ error: "Template not found" });
-        }
+        if (!template) return res.status(404).json({ error: "Template not found" });
 
-        // ✅ Create the question
         const newQuestion = await prisma.question.create({
             data: {
                 text,
                 type,
+                description: description || '',
                 templateId,
             },
         });
 
         return res.status(201).json({ message: "Question added successfully", question: newQuestion });
-
     } catch (error) {
-        console.error("Error adding question:", error);
+        console.error(error);
         return res.status(500).json({ error: "Something went wrong" });
     }
 });
 
-// Edit a Question (Only accessible by admin or template author)
+
 router.put('/templates/:templateId/questions/:questionId', authMiddleware('ADMIN', 'AUTHOR'), async (req, res) => {
-    const { text, type } = req.body;
+    const { text, type, description } = req.body; // 👈 include description
     const { templateId, questionId } = req.params;
 
-    // Validate input
     if (!text || !type) {
         return res.status(400).json({ error: 'Text and type are required' });
     }
 
     try {
-        // Fetch template to check author
         const template = await prisma.template.findUnique({
             where: { id: parseInt(templateId, 10) },
-            select: { authorId: true },  // Only get the authorId
+            select: { authorId: true },
         });
 
-        if (!template) {
-            return res.status(404).json({ error: 'Template not found' });
-        }
+        if (!template) return res.status(404).json({ error: 'Template not found' });
 
-        // Log the template authorId for debugging
-        console.log("Template Author ID:", template.authorId);
+        const question = await prisma.question.findUnique({ where: { id: parseInt(questionId, 10) } });
+        if (!question) return res.status(404).json({ error: 'Question not found' });
 
-        // Find the question
-        const question = await prisma.question.findUnique({
-            where: { id: parseInt(questionId, 10) },
-        });
-
-        if (!question) {
-            return res.status(404).json({ error: 'Question not found' });
-        }
-
-        // Log the logged-in user (req.user)
-        console.log('Logged-in User:', req.user);
-
-        // Ensure the user is either an admin or the author of the template (not the question)
         if (req.user.role !== 'ADMIN' && template.authorId !== req.user.id) {
             return res.status(403).json({ error: 'You are not authorized to edit this question' });
         }
 
-        // Update the question
         const updatedQuestion = await prisma.question.update({
             where: { id: parseInt(questionId, 10) },
-            data: { text, type },
+            data: { text, type, description: description || '' }, // 👈 update description too
         });
 
         return res.json({ message: 'Question updated successfully', question: updatedQuestion });
     } catch (error) {
-        console.error('❌ Error updating question:', error);
-        return res.status(500).json({ error: 'Something went wrong while updating the question' });
+        console.error(error);
+        return res.status(500).json({ error: 'Something went wrong' });
     }
 });
+
 
 
 

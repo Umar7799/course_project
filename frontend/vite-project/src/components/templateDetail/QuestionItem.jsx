@@ -22,6 +22,10 @@ const QuestionItem = ({
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editedAnswer, setEditedAnswer] = useState('');
 
+  if (!question || !question.id) {
+    return <div>Invalid question data</div>;
+  }
+
   const handleChange = (e) => {
     setAnswers((prev) => ({ ...prev, [question.id]: e.target.value }));
   };
@@ -36,8 +40,6 @@ const QuestionItem = ({
       setEditedAnswer('');
     }
   };
-
-
 
   const isBeingEdited = isEditing === question.id;
 
@@ -54,9 +56,17 @@ const QuestionItem = ({
               className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 mt-1"
               type="text"
               value={editedQuestion.text}
-              onChange={(e) =>
-                setEditedQuestion({ ...editedQuestion, text: e.target.value })}
+              onChange={(e) => setEditedQuestion({ ...editedQuestion, text: e.target.value })}
             />
+
+            <label className='text-sm font-semibold mt-3 block'>Edit Question Description:</label>
+            <textarea
+              className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 mt-1"
+              rows={3}
+              value={editedQuestion.description || ''}
+              onChange={(e) => setEditedQuestion({ ...editedQuestion, description: e.target.value })}
+            />
+
             <div className='flex mt-2'>
               <button className="bg-green-600 font-semibold text-white py-1 px-4 rounded-md" type="button" onClick={onSubmitEdit}>Update</button>
               <button className="bg-red-500 font-semibold text-white py-1 px-4 rounded-md ml-2" type="button" onClick={onCancelEdit}>Cancel</button>
@@ -65,8 +75,16 @@ const QuestionItem = ({
         ) : (
           <>
             <label className='font-semibold'>{question.text}</label>
-            <input className="bg-gray-50 my-2 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-              type="text" value={answer} onChange={handleChange} placeholder='Your answer' />
+            {question.description && (
+              <p className="text-sm text-gray-700 italic mt-1">{question.description}</p>
+            )}
+            <input
+              className="bg-gray-50 my-2 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+              type="text"
+              value={answer}
+              onChange={handleChange}
+              placeholder='Your answer'
+            />
             {showSubmit && (
               <button className="mt-2 bg-green-600 text-white px-4 py-1 rounded-md" type="submit">Submit</button>
             )}
@@ -74,6 +92,7 @@ const QuestionItem = ({
         )}
       </div>
 
+      {/* Answers rendering */}
       {Array.isArray(question.answers) && question.answers.map((ans) => (
         <div key={ans.id} className="mt-2 p-2 border rounded-md bg-white text-black">
           {editingAnswerId === ans.id ? (
@@ -85,11 +104,13 @@ const QuestionItem = ({
               />
               <button
                 className="bg-blue-500 text-white px-2 py-1 rounded"
-                onClick={() => handleSaveAnswer(ans.id)} type='button'
+                onClick={() => handleSaveAnswer(ans.id)}
+                type='button'
               >
                 Save
               </button>
-              <button type='button'
+              <button
+                type='button'
                 className="text-sm text-gray-500"
                 onClick={() => {
                   setEditingAnswerId(null);
@@ -107,10 +128,23 @@ const QuestionItem = ({
               </div>
               {user && ans.form?.userId === user.id && (
                 <div className="flex space-x-2">
-                  <button className="text-xs text-blue-600 hover:underline"
-                    type='button' onClick={() => { setEditingAnswerId(ans.id); setEditedAnswer(ans.response); }}>Edit</button>
-                  <button className="text-xs text-red-600 hover:underline"
-                    type="button" onClick={() => onDeleteAnswer(ans.id)}>Delete</button>
+                  <button
+                    className="text-xs text-blue-600 hover:underline"
+                    type='button'
+                    onClick={() => {
+                      setEditingAnswerId(ans.id);
+                      setEditedAnswer(ans.response);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="text-xs text-red-600 hover:underline"
+                    type="button"
+                    onClick={() => onDeleteAnswer(ans.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               )}
             </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/useAuth';
 
-const AddQuestionForm = ({ templateId }) => {
+const AddQuestionForm = ({ templateId, setTemplate }) => {
   const [text, setText] = useState('');
   const [type, setType] = useState('SINGLE_LINE');
   const [error, setError] = useState('');
@@ -28,12 +28,19 @@ const AddQuestionForm = ({ templateId }) => {
       });
 
       const result = await response.json();
+      console.log('Add Question Result:', result);  // Log to check the response
 
       if (!response.ok) {
         setError(result.error || 'Failed to add question');
         setSuccess('');
         return;
       }
+
+      // Ensure questions is an array and update template
+      setTemplate(prevTemplate => ({
+        ...prevTemplate,
+        questions: [...(prevTemplate.questions || []), result.newQuestion],  // Use result.newQuestion, ensure it's valid
+      }));
 
       setSuccess('Question added successfully!');
       setError('');
@@ -45,9 +52,9 @@ const AddQuestionForm = ({ templateId }) => {
     }
   };
 
+
   return (
     <div className={darkToggle ? 'mt-8 border border-gray-800 bg-gray-800 p-4 rounded-md' : 'mt-8 border border-gray-400 bg-gray-400 p-4 rounded-md'}>
-
       <h3 className='font-semibold text-lg'>Add Question to Template</h3>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {success && <p style={{ color: 'green' }}>{success}</p>}
@@ -69,8 +76,6 @@ const AddQuestionForm = ({ templateId }) => {
           <button className='bg-green-600 font-semibold text-white mt-2 sm:mt-0 ml-2 py-2 px-4 rounded-md' type="submit">Add Question</button>
         </div>
       </form>
-
-
     </div>
   );
 };

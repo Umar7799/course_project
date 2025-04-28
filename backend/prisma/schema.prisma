@@ -65,6 +65,7 @@ model Like {
 model Question {
   id         Int          @id @default(autoincrement())
   text       String
+  description String?  // Add this line if it's missing
   type       QuestionType
   templateId Int // 👈 Changed from String to Int
   template   Template     @relation(fields: [templateId], references: [id], onDelete: Cascade)

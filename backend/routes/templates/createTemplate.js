@@ -28,8 +28,6 @@ const upload = multer({ storage, fileFilter });
 
 
 
-
-
 router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.array('images'), async (req, res) => {
     const {
         title,
@@ -37,13 +35,36 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.array('im
         topic,
         tags,
         isPublic: isPublicRaw,
-        allowedUserEmails: allowedUserEmailsJson
+        allowedUserEmails: allowedUserEmailsJson,
+        questions // <- New field for questions
     } = req.body;
 
-    const isPublic = isPublicRaw === 'true'; // 👈 properly parsed early
+    // Parse questions to ensure it's an array
+    let parsedQuestions = [];
+    try {
+        parsedQuestions = JSON.parse(questions); // Parse the stringified questions
+    } catch (err) {
+        return res.status(400).json({ error: 'Invalid questions format' });
+    }
 
+    const isPublic = isPublicRaw === 'true';
     const imagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
     const authorId = req.user.id;
+
+    // Define the valid types based on your Prisma enum
+    const validQuestionTypes = ['SINGLE_LINE', 'MULTI_LINE', 'INTEGER', 'CHECKBOX']; // Adjust according to your enum
+
+    // Validate that the 'type' for each question is a valid 'QuestionType'
+    const validatedQuestions = parsedQuestions.map(q => {
+        if (!validQuestionTypes.includes(q.type)) {
+            throw new Error(`Invalid question type: ${q.type}`);
+        }
+        return {
+            text: q.text,
+            description: q.description || '',
+            type: q.type
+        };
+    });
 
     try {
         let tagsArray = [];
@@ -52,15 +73,13 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.array('im
         }
 
         let usersToConnect = [];
-        if (!isPublic && allowedUserEmailsJson) {  // 👈 now works correctly
+        if (!isPublic && allowedUserEmailsJson) {
             const allowedUserEmails = JSON.parse(allowedUserEmailsJson);
-
             const existingUsers = await prisma.user.findMany({
                 where: {
                     email: { in: allowedUserEmails }
                 }
             });
-
             usersToConnect = existingUsers.map(user => ({ id: user.id }));
         }
 
@@ -75,6 +94,9 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.array('im
                 authorId,
                 allowedUsers: {
                     connect: usersToConnect
+                },
+                questions: {
+                    create: validatedQuestions // Use validated questions
                 }
             },
             include: {
@@ -104,6 +126,8 @@ router.post('/createTemplate', authMiddleware('USER', 'ADMIN'), upload.array('im
         res.status(500).json({ error: 'Failed to create template' });
     }
 });
+
+
 
 
 
