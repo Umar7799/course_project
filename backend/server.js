@@ -3,6 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const cookieParser = require("cookie-parser");
+const { PrismaClient } = require("@prisma/client"); // Added Prisma import
+
+// Initialize Prisma
+const prisma = new PrismaClient();
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
@@ -21,11 +25,27 @@ app.use(express.urlencoded({ extended: true }));
 // CORS Configuration (Updated for production)
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL, // Netlify URL will go here
-    "http://localhost:5173" // Keep for local development
+    process.env.FRONTEND_URL,
+    "http://localhost:5173"
   ],
-  credentials: true
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Database connection health check (MOVED BEFORE ROUTES)
+app.use(async (req, res, next) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    next();
+  } catch (err) {
+    console.error("Database connection failed:", err);
+    return res.status(503).json({ 
+      error: "Service unavailable",
+      details: "Database connection failed"
+    });
+  }
+});
 
 // ====================== ROUTES ======================
 app.use("/auth", authRoutes);
@@ -35,26 +55,47 @@ app.use("/auth", questionRoutes);
 app.use("/auth", promoteUsers);
 
 // ====================== STATIC FILES ======================
-// (Warning: Render's filesystem is temporary)
 if (process.env.NODE_ENV !== "production") {
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+} else {
+  app.use("/uploads", (req, res) => {
+    res.status(403).json({ 
+      error: "Forbidden",
+      message: "File uploads are disabled in production"
+    });
+  });
 }
 
 // ====================== ERROR HANDLING ======================
 // 404 Handler
 app.use((req, res) => {
-  res.status(404).json({ error: "Not Found" });
+  res.status(404).json({ 
+    error: "Endpoint not found",
+    availableEndpoints: ["/auth"]
+  });
 });
 
 // 500 Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Internal Server Error" });
+  console.error("Server error:", err.stack);
+  res.status(500).json({ 
+    error: "Internal server error",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack })
+  });
 });
 
 // ====================== START SERVER ======================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || "development"} mode`);
   console.log(`🚀 Server ready at http://localhost:${PORT}`);
+});
+
+// Prisma shutdown hook
+process.on("SIGTERM", async () => {
+  console.log("Shutting down server...");
+  await prisma.$disconnect();
+  server.close(() => {
+    console.log("Server terminated");
+  });
 });

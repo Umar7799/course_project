@@ -182,6 +182,30 @@ const CreateTemplatePage = () => {
           </div>
         </div>
 
+        {imageFiles.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {imageFiles.map((file, index) => (
+              <div key={index} className="relative border rounded overflow-hidden shadow">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={`preview-${index}`}
+                  className="w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setImageFiles(prev => prev.filter((_, i) => i !== index))
+                  }
+                  className="absolute top-1 right-1 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full px-2 py-1 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+
         {/* Questions Section */}
         <div>
           <label className="pl-1 font-semibold">Questions</label>
