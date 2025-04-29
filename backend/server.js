@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 // CORS Configuration (Updated for production)
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL,
+    "https://course-project-quizapp.netlify.app",
     "http://localhost:5173"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
