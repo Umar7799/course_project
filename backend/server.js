@@ -54,6 +54,17 @@ app.use("/auth", formRoutes);
 app.use("/auth", questionRoutes);
 app.use("/auth", promoteUsers);
 
+
+
+// Add this new route 👇
+app.get("/", (req, res) => {
+    res.send("Backend is working! ✅");
+  });
+
+
+
+
+
 // ====================== STATIC FILES ======================
 if (process.env.NODE_ENV !== "production") {
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -100,8 +111,3 @@ process.on("SIGTERM", async () => {
   });
 });
 
-
-// Add this new route 👇
-app.get("/", (req, res) => {
-    res.send("Backend is working! ✅");
-  });
