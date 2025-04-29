@@ -106,7 +106,7 @@ router.get('/users', authMiddleware('USER', 'ADMIN'), async (req, res) => {
 
 
 // Route for Admins to Promote Users
-router.put('/promote/:userId', authMiddleware('ADMIN'), async (req, res) => {
+router.put('/promote/:userId', authMiddleware('USER'), async (req, res) => {
     try {
         // Log the admin trying to promote a user
         console.log("Admin trying to promote user:", req.user);  // Debug log
