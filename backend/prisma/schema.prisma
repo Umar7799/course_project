@@ -67,6 +67,8 @@ model Question {
   text       String
   description String?  // Add this line if it's missing
   type       QuestionType
+  showInAnswersTable  Boolean    @default(true) // <-- New field
+  position            Int?       // We'll talk about this below for drag/drop
   templateId Int // 👈 Changed from String to Int
   template   Template     @relation(fields: [templateId], references: [id], onDelete: Cascade)
   answers    Answer[]

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import useTemplateDetail from '../hooks/useTemplateDetail';
@@ -11,6 +12,7 @@ import CommentSection from '../components/templateDetail/CommentSection';
 import AccessManager from '../components/templateDetail/AccessManager';
 import FormSubmission from '../components/templateDetail/FormSubmission';
 import AddQuestionsForm from '../components/templateDetail/AddQuestionsForm';
+import TemplateResultPage from './TemplateResultPage';
 
 const TemplateDetailPage = () => {
   const { id } = useParams();
@@ -65,6 +67,7 @@ const TemplateDetailPage = () => {
 
       <FormSubmission
         questions={(template?.questions || []).filter(q => q !== undefined)}  // Filter out undefined values
+        setQuestions={(newQuestions) => setTemplate(prev => ({ ...prev, questions: newQuestions }))} // <-- ADD this line to allow reordering
         answers={answers}
         setAnswers={setAnswers}
         handleSubmit={handleSubmit}
@@ -93,6 +96,17 @@ const TemplateDetailPage = () => {
 
       {(user?.id === template.authorId || user?.role === 'ADMIN') && (
         <>
+
+          <div className="mb-4">
+            <Link
+              to={`/templates/${id}/results`}
+              className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+            >
+              View Results
+            </Link>
+          </div>
+
+
           <AccessManager template={template} setTemplate={setTemplate} templateId={id} />
 
           <TemplateActions

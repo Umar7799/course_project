@@ -93,8 +93,8 @@ const QuestionItem = ({
       </div>
 
       {/* Answers rendering */}
-      {Array.isArray(question.answers) && question.answers.map((ans) => (
-        <div key={ans.id} className="mt-2 p-2 border rounded-md bg-white text-black">
+      {Array.isArray(question.answers) && question.answers.map((ans, index) => (
+        <div key={ans.id || index} className="mt-2 p-2 border rounded-md bg-white text-black">
           {editingAnswerId === ans.id ? (
             <div className="flex items-center space-x-2">
               <input

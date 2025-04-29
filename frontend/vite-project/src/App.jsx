@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';  // Import ProtectedRoute
 import CreateTemplate from './pages/CreateTemplate';
 import AdminUsers from './pages/AdminUsers';
+import TemplateResultPage from './pages/TemplateResultPage';
 
 const App = () => {
   return (
@@ -22,24 +23,14 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route
-            path="/profile"
-            element={<ProtectedRoute element={<Profile />} />}
-          />
+          <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/templates/:id" element={<TemplateDetailPage />} />
-          <Route
-            path="/createTemplate"
-            element={<ProtectedRoute element={<CreateTemplate />} />}
-          />
-          <Route
-            path="/dashboard"
-            element={<ProtectedRoute element={<Dashboard />} requiredRole="ADMIN" />}
-          />
-          <Route
-            path="/promoteUser"
-            element={<ProtectedRoute element={<AdminUsers />} requiredRole="ADMIN" />}
-          />
+          <Route path="/templates/:id/results" element={<TemplateResultPage />} />
+          <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
+          <Route path="/createTemplate" element={<ProtectedRoute element={<CreateTemplate />} />} />
+          <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} requiredRole="ADMIN" />} />
+          <Route path="/promoteUser" element={<ProtectedRoute element={<AdminUsers />} requiredRole="ADMIN" />} />
         </Routes>
       </div>
     </AuthProvider>

@@ -116,6 +116,80 @@ router.get('/public/templates', async (req, res) => {
     }
 });
 
+router.get('/templates/:templateId/forms', authMiddleware('USER', 'ADMIN'), async (req, res) => {
+    const { templateId } = req.params;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    try {
+        // Get template with comments and likes
+        const template = await prisma.template.findUnique({
+            where: { id: parseInt(templateId, 10) },
+            include: {
+                comments: {
+                    include: {
+                        user: { select: { id: true, name: true, email: true } }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                },
+                likes: {
+                    include: {
+                        user: { select: { id: true, name: true } }
+                    }
+                },
+                questions: {
+                    select: { id: true, text: true, position: true }
+                }
+            }
+        });
+
+        if (!template) {
+            return res.status(404).json({ error: 'Template not found' });
+        }
+
+        if (template.authorId !== userId && userRole !== 'ADMIN') {
+            return res.status(403).json({ error: 'Unauthorized access' });
+        }
+
+        // Get forms with answers
+        const forms = await prisma.form.findMany({
+            where: { 
+                templateId: parseInt(templateId, 10),
+                answers: { some: {} }
+            },
+            include: {
+                user: { select: { id: true, name: true, email: true } },
+                answers: {
+                    include: {
+                        question: { select: { text: true, position: true } }
+                    },
+                    orderBy: { question: { position: 'asc' } }
+                }
+            },
+            orderBy: { submittedAt: 'desc' }
+        });
+
+        return res.json({
+            template: {
+                id: template.id,
+                title: template.title,
+                comments: template.comments,
+                likes: template.likes,
+                questions: template.questions
+            },
+            forms,
+            userHasLiked: template.likes.some(like => like.userId === userId),
+            likeCount: template.likes.length
+        });
+    } catch (error) {
+        console.error('Error fetching template results:', error);
+        return res.status(500).json({ 
+            error: 'Failed to load template results',
+            details: error.message 
+        });
+    }
+});
+
 
 // Get a template and its questions + answers + userIds via forms
 router.get('/templates/:id/full', authMiddleware('USER', 'ADMIN'), async (req, res) => {
@@ -146,11 +220,14 @@ router.get('/templates/:id/full', authMiddleware('USER', 'ADMIN'), async (req, r
                     },
                 },
                 questions: {
+                    orderBy: { position: 'asc' },  // ✅ Sort questions by position
                     select: {
                         id: true,
                         text: true,
                         description: true,
                         type: true,
+                        showInAnswersTable: true,   // ✅ select new field
+                        position: true,              // ✅ select position field
                         answers: {
                             select: {
                                 id: true,
