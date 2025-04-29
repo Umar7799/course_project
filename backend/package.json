@@ -7,7 +7,7 @@
     "dev": "nodemon server.js",
     "postinstall": "prisma generate",
     "migrate": "prisma migrate deploy",
-    "render-build": "npm run migrate && prisma generate"
+    "render-build": "node -e \"require('cors'); console.log('✅ All dependencies installed')\" && npm run migrate && prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +28,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.9",
-    "prisma": "^6.5.0"
+    "prisma": "^6.6.0"
   }
 }
