@@ -99,3 +99,9 @@ process.on("SIGTERM", async () => {
     console.log("Server terminated");
   });
 });
+
+
+// Add this new route 👇
+app.get("/", (req, res) => {
+    res.send("Backend is working! ✅");
+  });
