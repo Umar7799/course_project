@@ -9,10 +9,13 @@ export default function useTemplateDetail(id, user) {
   const [likesCount, setLikesCount] = useState(0);
   const [comments, setComments] = useState([]);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+
   useEffect(() => {
     const fetchTemplate = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/auth/templates/${id}/full`, {
+        const response = await axios.get(`${API_URL}/auth/templates/${id}/full`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           }
@@ -48,18 +51,18 @@ export default function useTemplateDetail(id, user) {
     };
 
     fetchTemplate();
-  }, [id, user?.id]);
+  }, [id, user?.id, API_URL]);
 
   const handleLikeToggle = async () => {
     try {
       if (hasLiked) {
-        await axios.delete(`http://localhost:5000/auth/templates/${id}/like`, {
+        await axios.delete(`${API_URL}/auth/templates/${id}/like`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         setHasLiked(false);
         setLikesCount(prev => prev - 1);
       } else {
-        await axios.post(`http://localhost:5000/auth/templates/${id}/like`, {}, {
+        await axios.post(`${API_URL}/auth/templates/${id}/like`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         setHasLiked(true);
@@ -72,7 +75,7 @@ export default function useTemplateDetail(id, user) {
 
   const toggleTemplateVisibility = async () => {
     try {
-      await axios.put(`http://localhost:5000/auth/templates/${id}/visibility`, {}, {
+      await axios.put(`${API_URL}/auth/templates/${id}/visibility`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
 

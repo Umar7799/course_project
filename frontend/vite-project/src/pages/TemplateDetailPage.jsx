@@ -12,7 +12,6 @@ import CommentSection from '../components/templateDetail/CommentSection';
 import AccessManager from '../components/templateDetail/AccessManager';
 import FormSubmission from '../components/templateDetail/FormSubmission';
 import AddQuestionsForm from '../components/templateDetail/AddQuestionsForm';
-import TemplateResultPage from './TemplateResultPage';
 
 const TemplateDetailPage = () => {
   const { id } = useParams();

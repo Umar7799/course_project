@@ -14,6 +14,8 @@ const TemplateResultPage = () => {
   const [error, setError] = useState(null);
   const [expandedFormId, setExpandedFormId] = useState(null);
   const [newComment, setNewComment] = useState('');
+  const API_URL = import.meta.env.VITE_API_URL;
+
 
   const formatDateTime = (dateString) => {
     if (!dateString) return { date: 'N/A', time: 'N/A' };
@@ -34,7 +36,7 @@ const TemplateResultPage = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/auth/templates/${templateId}/forms`, {
+      const response = await axios.get(`${API_URL}/auth/templates/${templateId}/forms`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setData(response.data);
@@ -43,7 +45,7 @@ const TemplateResultPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [templateId]);
+  }, [templateId, API_URL]);
 
   useEffect(() => {
     fetchData();
@@ -51,7 +53,7 @@ const TemplateResultPage = () => {
 
   const handleAddComment = async () => {
     try {
-      await axios.post(`http://localhost:5000/auth/templates/${templateId}/comments`, {
+      await axios.post(`${API_URL}/auth/templates/${templateId}/comments`, {
         text: newComment
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -66,7 +68,7 @@ const TemplateResultPage = () => {
   const handleLikeToggle = async () => {
     try {
       const method = data.userHasLiked ? 'delete' : 'post';
-      await axios[method](`http://localhost:5000/auth/templates/${templateId}/likes`, {}, {
+      await axios[method](`${API_URL}/auth/templates/${templateId}/likes`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       await fetchData(); // refresh after toggling like

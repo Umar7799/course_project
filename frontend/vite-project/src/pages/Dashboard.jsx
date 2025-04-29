@@ -6,13 +6,15 @@ const Dashboard = () => {
   const [user, setUser] = useState(null); // Stores user profile
   const [error, setError] = useState(null); // Error handling
   const [loading, setLoading] = useState(true); // Track loading state
+  
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token'); // JWT from login
 
-        const response = await axios.get('http://localhost:5000/auth/profile', {
+        const response = await axios.get(`${API_URL}/auth/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -31,7 +33,7 @@ const Dashboard = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [API_URL]);
 
   if (loading) {
     return <div>Loading user profile...</div>; // Show loading message while fetching data

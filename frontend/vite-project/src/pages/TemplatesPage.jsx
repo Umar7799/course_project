@@ -12,6 +12,9 @@ const TemplatesPage = () => {
   const [topics, setTopics] = useState([]);
   const { darkToggle, user } = useAuth();
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+
   useEffect(() => {
     const fetchTemplates = async () => {
       setLoading(true);
@@ -22,8 +25,8 @@ const TemplatesPage = () => {
 
       try {
         const endpoint = isAuthenticated
-          ? 'http://localhost:5000/auth/templates'
-          : 'http://localhost:5000/auth/public/templates';
+          ? `${API_URL}/auth/templates`
+          : `${API_URL}/auth/public/templates`;
 
         const config = isAuthenticated
           ? { headers: { Authorization: `Bearer ${token}` } }
@@ -60,7 +63,7 @@ const TemplatesPage = () => {
     };
 
     fetchTemplates();
-  }, [selectedTopic, user?.id]);
+  }, [selectedTopic, user?.id, API_URL]);
 
   const handleSearch = (e) => {
     const searchTerm = e.target.value.toLowerCase();

@@ -19,10 +19,13 @@ const CreateTemplatePage = () => {
   const [users, setUsers] = useState([]);
   const [questions, setQuestions] = useState([{ text: '', description: '', type: 'SINGLE_LINE' }]);
 
+  
+  const API_URL = import.meta.env.VITE_API_URL;
+  
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch('http://localhost:5000/auth/users', {
+        const res = await fetch(`${API_URL}/auth/users`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -35,7 +38,7 @@ const CreateTemplatePage = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [API_URL]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,7 +66,7 @@ const CreateTemplatePage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/auth/createTemplate', {
+      const response = await fetch(`${API_URL}/auth/createTemplate`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,

@@ -6,6 +6,8 @@ const AddQuestionForm = ({ templateId, setTemplate }) => {
   const [type, setType] = useState('SINGLE_LINE');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const API_URL = import.meta.env.VITE_API_URL;
+
 
   const { darkToggle } = useAuth();
 
@@ -18,7 +20,7 @@ const AddQuestionForm = ({ templateId, setTemplate }) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/auth/templates/${templateId}/questions`, {
+      const response = await fetch(`${API_URL}/auth/templates/${templateId}/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

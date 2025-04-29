@@ -9,8 +9,11 @@ import { AuthContext } from './AuthContext';
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+
     const login = async (email, password) => {
-        const res = await fetch('http://localhost:5000/auth/login', {
+        const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -23,7 +26,7 @@ export const AuthProvider = ({ children }) => {
         const data = await res.json();
         localStorage.setItem('token', data.token);
 
-        const profileRes = await fetch('http://localhost:5000/auth/profile', {
+        const profileRes = await fetch(`${API_URL}/auth/profile`, {
             headers: {
                 Authorization: `Bearer ${data.token}`,
             },
@@ -48,7 +51,7 @@ export const AuthProvider = ({ children }) => {
         if (!token) return;
 
         try {
-            const res = await fetch('http://localhost:5000/auth/profile', {
+            const res = await fetch(`${API_URL}/auth/profile`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -69,7 +72,7 @@ export const AuthProvider = ({ children }) => {
             console.log(err);
             logout();
         }
-    }, []);
+    }, [API_URL]);
 
     useEffect(() => {
         checkAuth();

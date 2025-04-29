@@ -1,11 +1,13 @@
 import React from 'react';
 
 const AccessManager = ({ template, setTemplate, templateId }) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
     const handleAddUser = async (e) => {
         e.preventDefault();
         const email = e.target.elements.email.value;
         try {
-            const res = await fetch(`http://localhost:5000/auth/templates/${templateId}/allow`, {
+            const res = await fetch(`${API_URL}/auth/templates/${templateId}/allow`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -24,7 +26,7 @@ const AccessManager = ({ template, setTemplate, templateId }) => {
 
     const handleRemoveUser = async (email) => {
         try {
-            await fetch(`http://localhost:5000/auth/templates/${templateId}/allow`, {
+            await fetch(`${API_URL}/auth/templates/${templateId}/allow`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

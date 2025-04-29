@@ -2,10 +2,12 @@ import React from 'react';
 import axios from 'axios';
 
 const TemplateActions = ({ isPublic, toggleVisibility, templateId, darkToggle }) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const handleDeleteTemplate = async () => {
     if (window.confirm("Are you sure you want to delete this template?")) {
       try {
-        await axios.delete(`http://localhost:5000/auth/templates/${templateId}`, {
+        await axios.delete(`${API_URL}/auth/templates/${templateId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },

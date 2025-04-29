@@ -3,6 +3,8 @@ import axios from 'axios';
 
 export default function useFormSubmission({ template, setTemplate, user, templateId }) {
     const [answers, setAnswers] = useState({});
+  const API_URL = import.meta.env.VITE_API_URL;
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -56,7 +58,7 @@ export default function useFormSubmission({ template, setTemplate, user, templat
             });
 
             const { data } = await axios.post(
-                `http://localhost:5000/auth/forms/submit`,
+                `${API_URL}/auth/forms/submit`,
                 {
                     templateId: parseInt(templateId),
                     answers: formattedAnswers,
@@ -135,7 +137,7 @@ export default function useFormSubmission({ template, setTemplate, user, templat
             console.warn('Skipping delete for temporary answer:', answerId);
         } else {
             try {
-                await axios.delete(`http://localhost:5000/auth/forms/answers/${answerId}`, {
+                await axios.delete(`${API_URL}/auth/forms/answers/${answerId}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
             } catch (error) {
@@ -193,7 +195,7 @@ export default function useFormSubmission({ template, setTemplate, user, templat
 
         try {
             await axios.put(
-                `http://localhost:5000/auth/forms/answers/${answerId}`,
+                `${API_URL}/auth/forms/answers/${answerId}`,
                 { response: newResponse },
                 {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },

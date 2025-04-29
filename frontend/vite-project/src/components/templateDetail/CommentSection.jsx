@@ -4,6 +4,8 @@ const CommentSection = ({ comments, setComments, user, templateId }) => {
   const [newComment, setNewComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedText, setEditedText] = useState('');
+  const API_URL = import.meta.env.VITE_API_URL;
+
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -22,7 +24,7 @@ const CommentSection = ({ comments, setComments, user, templateId }) => {
     setNewComment('');
 
     try {
-      const res = await fetch(`http://localhost:5000/auth/templates/${templateId}/comments`, {
+      const res = await fetch(`${API_URL}/auth/templates/${templateId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +58,7 @@ const CommentSection = ({ comments, setComments, user, templateId }) => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/auth/comments/${commentId}`, {
+      const res = await fetch(`${API_URL}/auth/comments/${commentId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -85,7 +87,7 @@ const CommentSection = ({ comments, setComments, user, templateId }) => {
     if (!editedText.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/auth/comments/${commentId}`, {
+      const res = await fetch(`${API_URL}/auth/comments/${commentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -6,6 +6,9 @@ export default function useQuestionEditing({ templateId, setTemplate }) {
   const [isEditing, setIsEditing] = useState(null);
   const [editedQuestion, setEditedQuestion] = useState({});
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+
   const handleEditQuestion = (question) => {
     setIsEditing(question.id);
     setEditedQuestion({ ...question });
@@ -15,7 +18,7 @@ export default function useQuestionEditing({ templateId, setTemplate }) {
     e.preventDefault();
     try {
       await axios.put(
-        `http://localhost:5000/auth/templates/${templateId}/questions/${editedQuestion.id}`,
+        `${API_URL}/auth/templates/${templateId}/questions/${editedQuestion.id}`,
         editedQuestion,
         {
           headers: {
@@ -41,7 +44,7 @@ export default function useQuestionEditing({ templateId, setTemplate }) {
   const handleDeleteQuestion = async (questionId) => {
     try {
       await axios.delete(
-        `http://localhost:5000/auth/templates/${templateId}/questions/${questionId}`,
+        `${API_URL}/auth/templates/${templateId}/questions/${questionId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,

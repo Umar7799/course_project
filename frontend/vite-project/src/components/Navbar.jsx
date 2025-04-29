@@ -25,7 +25,7 @@ const Navbar = () => {
       <div className='hidden font-semibold sm:flex space-x-4 pt-2'>
 
         <Link className="navbar-brand" to="/">
-          <img className='h-8 w-auto' src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="" />
+          <img className='h-8 w-auto' src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="PIC" />
         </Link>
         <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/">Home</Link>
         {user && user?.role === 'ADMIN' && (
