@@ -47,6 +47,13 @@ app.use(async (req, res, next) => {
   }
 });
 
+app.use((req, res, next) => {
+    console.log(`[${req.method}] ${req.originalUrl}`);
+    next();
+  });
+  
+
+
 // ====================== ROUTES ======================
 app.use("/auth", authRoutes);
 app.use("/auth", templateRoutes);

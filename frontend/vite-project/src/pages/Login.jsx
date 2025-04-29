@@ -12,6 +12,7 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        
 
         try {
             await login(email, password);  // Call the login function from context
