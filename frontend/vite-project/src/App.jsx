@@ -29,7 +29,7 @@ const App = () => {
           <Route path="/templates/:id/results" element={<TemplateResultPage />} />
           <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
           <Route path="/createTemplate" element={<ProtectedRoute element={<CreateTemplate />} />} />
-          <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} requiredRole="ADMIN" />} />
+          <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
           <Route path="/promoteUser" element={<ProtectedRoute element={<AdminUsers />} requiredRole="ADMIN" />} />
         </Routes>
       </div>

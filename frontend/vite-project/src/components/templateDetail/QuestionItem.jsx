@@ -52,20 +52,12 @@ const QuestionItem = ({
         {isBeingEdited ? (
           <div>
             <label className='text-sm font-semibold'>Edit Question Text:</label>
-            <input
-              className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 mt-1"
-              type="text"
-              value={editedQuestion.text}
-              onChange={(e) => setEditedQuestion({ ...editedQuestion, text: e.target.value })}
-            />
+            <input className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 mt-1"
+              type="text" value={editedQuestion.text} onChange={(e) => setEditedQuestion({ ...editedQuestion, text: e.target.value })} />
 
             <label className='text-sm font-semibold mt-3 block'>Edit Question Description:</label>
-            <textarea
-              className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 mt-1"
-              rows={3}
-              value={editedQuestion.description || ''}
-              onChange={(e) => setEditedQuestion({ ...editedQuestion, description: e.target.value })}
-            />
+            <textarea className="bg-gray-50 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 mt-1"
+              rows={3} value={editedQuestion.description || ''} onChange={(e) => setEditedQuestion({ ...editedQuestion, description: e.target.value })} />
 
             <div className='flex mt-2'>
               <button className="bg-green-600 font-semibold text-white py-1 px-4 rounded-md" type="button" onClick={onSubmitEdit}>Update</button>
@@ -76,49 +68,41 @@ const QuestionItem = ({
           <>
             <label className='font-semibold'>{question.text}</label>
             {question.description && (
-              <p className="text-sm text-gray-700 italic mt-1">{question.description}</p>
+              <p className={darkToggle ? "text-sm italic mt-1 text-white" : "text-sm text-gray-700 italic mt-1"}>{question.description}</p>
             )}
-            <input
-              className="bg-gray-50 my-2 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-              type="text"
-              value={answer}
-              onChange={handleChange}
-              placeholder='Your answer'
-            />
+            <input className="bg-gray-50 my-2 block w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+              type="text" value={answer} onChange={handleChange} placeholder='Your answer' />
             {showSubmit && (
-              <button className="mt-2 bg-green-600 text-white px-4 py-1 rounded-md" type="submit">Submit</button>
+              <button className="mt-2 bg-green-600 text-white px-4 py-1 rounded-md font-semibold" type="submit">Submit</button>
             )}
           </>
         )}
       </div>
+
+      {(isAuthor || isAdmin) && !isBeingEdited && (
+        <div className={darkToggle
+          ? "mt-2 font-semibold border rounded-lg p-4 border-gray-800 shadow bg-gray-800"
+          : "mt-2 font-semibold border rounded-lg p-4 border-gray-400 shadow bg-gray-400"}>
+          <h1>only admin or author can have these functions:</h1>
+          <div className='sm:flex space-y-2 space-x-2 sm:space-y-0 pt-1'>
+            <button className="text-white bg-yellow-500 px-4 py-1 rounded-md" type="button" onClick={onEdit}>Edit the question</button>
+            <button className="text-white bg-red-500 px-4 py-1 rounded-md" type="button" onClick={onDelete}>Delete the question</button>
+          </div>
+        </div>
+      )}
 
       {/* Answers rendering */}
       {Array.isArray(question.answers) && question.answers.map((ans, index) => (
         <div key={ans.id || index} className="mt-2 p-2 border rounded-md bg-white text-black">
           {editingAnswerId === ans.id ? (
             <div className="flex items-center space-x-2">
-              <input
-                className="border px-2 py-1 rounded w-full"
-                value={editedAnswer}
-                onChange={(e) => setEditedAnswer(e.target.value)}
-              />
-              <button
-                className="bg-blue-500 text-white px-2 py-1 rounded"
-                onClick={() => handleSaveAnswer(ans.id)}
-                type='button'
-              >
-                Save
-              </button>
-              <button
-                type='button'
-                className="text-sm text-gray-500"
-                onClick={() => {
+              <input className="border px-2 py-1 rounded w-full" value={editedAnswer} onChange={(e) => setEditedAnswer(e.target.value)} />
+              <button className="bg-blue-500 text-white px-2 py-1 rounded" onClick={() => handleSaveAnswer(ans.id)} type='button'>Save</button>
+              <button className="text-sm text-gray-500"
+                type='button' onClick={() => {
                   setEditingAnswerId(null);
                   setEditedAnswer('');
-                }}
-              >
-                Cancel
-              </button>
+                }}>Cancel</button>
             </div>
           ) : (
             <div className="flex justify-between items-center">
@@ -128,23 +112,10 @@ const QuestionItem = ({
               </div>
               {user && ans.form?.userId === user.id && (
                 <div className="flex space-x-2">
-                  <button
-                    className="text-xs text-blue-600 hover:underline"
-                    type='button'
-                    onClick={() => {
-                      setEditingAnswerId(ans.id);
-                      setEditedAnswer(ans.response);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="text-xs text-red-600 hover:underline"
-                    type="button"
-                    onClick={() => onDeleteAnswer(ans.id)}
-                  >
-                    Delete
-                  </button>
+                  <button className="text-xs text-blue-600 hover:underline border py-1 px-2 rounded-lg border-gray-800"
+                    type='button' onClick={() => { setEditingAnswerId(ans.id); setEditedAnswer(ans.response); }}>Edit</button>
+                  <button className="text-xs text-red-600 hover:underline border py-1 px-2 rounded-lg border-gray-800"
+                    type="button" onClick={() => onDeleteAnswer(ans.id)}>Delete</button>
                 </div>
               )}
             </div>
@@ -152,29 +123,7 @@ const QuestionItem = ({
         </div>
       ))}
 
-      {(isAuthor || isAdmin) && !isBeingEdited && (
-        <div className={darkToggle
-          ? "mt-2 font-semibold border rounded-lg p-4 border-gray-800 shadow bg-gray-800"
-          : "mt-2 font-semibold border rounded-lg p-4 border-gray-400 shadow bg-gray-400"}>
-          <h1>only admin or author can have these functions:</h1>
-          <div className='sm:flex space-y-2 space-x-2 sm:space-y-0 pt-1'>
-            <button
-              type="button"
-              className="text-white bg-yellow-500 px-4 py-1 rounded-md"
-              onClick={onEdit}
-            >
-              Edit the question
-            </button>
-            <button
-              type="button"
-              className="text-white bg-red-500 px-4 py-1 rounded-md"
-              onClick={onDelete}
-            >
-              Delete the question
-            </button>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

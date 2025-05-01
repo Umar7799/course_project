@@ -95,25 +95,18 @@ const TemplateDetailPage = () => {
 
       {(user?.id === template.authorId || user?.role === 'ADMIN') && (
         <>
+          <TemplateActions isPublic={template.isPublic} toggleVisibility={toggleTemplateVisibility} templateId={id} />
 
-          <div className="mb-4">
-            <Link
-              to={`/templates/${id}/results`}
-              className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
-            >
-              View Results
-            </Link>
-          </div>
-
+          <AddQuestionsForm templateId={id} setTemplate={setTemplate} />
 
           <AccessManager template={template} setTemplate={setTemplate} templateId={id} />
 
-          <TemplateActions
-            isPublic={template.isPublic}
-            toggleVisibility={toggleTemplateVisibility}
-            templateId={id}
-          />
-          <AddQuestionsForm templateId={id} setTemplate={setTemplate} />
+          <div className="mt-4">
+            <Link className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+              to={`/templates/${id}/results`}>View Results</Link>
+          </div>
+
+
         </>
       )}
     </div>

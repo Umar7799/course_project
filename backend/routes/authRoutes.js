@@ -92,7 +92,7 @@ router.get('/profile', authMiddleware('USER', 'ADMIN'), async (req, res) => {
 router.get('/users', authMiddleware('USER', 'ADMIN'), async (req, res) => {
     try {
         const users = await prisma.user.findMany({
-            select: { id: true, name: true, email: true }
+            select: { id: true, name: true, email: true, id: true }
         });
 
         return res.json(users);

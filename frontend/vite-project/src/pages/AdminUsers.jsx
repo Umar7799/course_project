@@ -130,65 +130,46 @@ const AdminUsers = () => {
   }, [fetchUsers]); // Fetch users when the component mounts or fetchUsers changes
 
   if (loading) {
-    return <div className="text-center text-lg mt-10">Loading users...</div>;
+    return <div className="text-center text-lg mt-24">Loading users...</div>;
   }
 
   return (
-    <div className="p-8 mt-14">
-      <h1 className="text-3xl font-bold mb-6 text-center">👑 Manage Users</h1>
+    <div className="p-4 sm:p-6 md:p-8 mt-10 md:mt-14">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center">
+        👑 Manage Users
+      </h1>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded-lg shadow-md">
+        <table className="min-w-full bg-white rounded-lg shadow-md text-sm sm:text-base">
           <thead>
             <tr className="bg-gray-100 text-gray-700">
-              <th className="py-3 px-6 text-left">Name</th>
-              <th className="py-3 px-6 text-left">Email</th>
-              <th className="py-3 px-6 text-left">Role</th>
-              <th className="py-3 px-6 text-center">Actions</th>
+              <th className="py-2 px-3 sm:py-3 sm:px-6 text-left">Name</th>
+              <th className="py-2 px-3 sm:py-3 sm:px-6 text-left">Email</th>
+              <th className="py-2 px-3 sm:py-3 sm:px-6 text-left">Role</th>
+              <th className="py-2 px-3 sm:py-3 sm:px-6 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {users.map((user) => (
               <tr key={user.id} className="border-b hover:bg-gray-50">
-                <td className="py-3 px-6">{user.name}</td>
-                <td className="py-3 px-6">{user.email}</td>
-                <td className="py-3 px-6">{user.role}</td>
-                <td className="py-3 px-6 text-center space-x-2">
-                  {user.role !== 'ADMIN' ? (
+                <td className="py-2 px-3 sm:py-3 sm:px-6">{user.name}</td>
+                <td className="py-2 px-3 sm:py-3 sm:px-6">{user.email}</td>
+                <td className="py-2 px-3 sm:py-3 sm:px-6">{user.role}</td>
+                <td className="py-2 px-3 sm:py-3 sm:px-6 text-center space-y-1 space-x-0 sm:space-x-2 sm:space-y-0">
+                  {user.role !== "ADMIN" ? (
                     <>
-                      <button
-                        onClick={() => promoteToAdmin(user.id)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
-                      >
-                        Promote
-                      </button>
-                      <button
-                        onClick={() => deleteUser(user.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
-                      >
-                        Delete
-                      </button>
+                      <button className="block sm:inline bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm"
+                        onClick={() => promoteToAdmin(user.id)}>Promote</button>
+                      <button className="block sm:inline bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm"
+                        onClick={() => deleteUser(user.id)}>Delete</button>
                     </>
+                  ) : currentUser?.id === user.id ? (
+                    <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm"
+                      onClick={selfDemote}>Self Demote</button>
                   ) : (
-                    <>
-                      {currentUser?.id === user.id ? (
-                        <button
-                          onClick={selfDemote}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md"
-                        >
-                          Self Demote
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => demoteUser(user.id)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md"
-                        >
-                          Demote
-                        </button>
-                      )}
-                    </>
+                    <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm"
+                      onClick={() => demoteUser(user.id)}>Demote</button>
                   )}
-
                 </td>
               </tr>
             ))}
@@ -196,6 +177,7 @@ const AdminUsers = () => {
         </table>
       </div>
     </div>
+
   );
 };
 

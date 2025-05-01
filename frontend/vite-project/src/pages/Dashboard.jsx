@@ -6,7 +6,7 @@ const Dashboard = () => {
   const [user, setUser] = useState(null); // Stores user profile
   const [error, setError] = useState(null); // Error handling
   const [loading, setLoading] = useState(true); // Track loading state
-  
+
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -20,9 +20,9 @@ const Dashboard = () => {
           },
         });
         if (!token) {
-            setError('No token found. Please log in.');
-            return;
-          }
+          setError('No token found. Please log in.');
+          return;
+        }
         setUser(response.data);
         setLoading(false); // Set loading to false after data is fetched
       } catch (err) {
@@ -40,7 +40,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div className='mt-24 ml-4'>
       <h1>📋 Dashboard</h1>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -49,6 +49,7 @@ const Dashboard = () => {
         <div>
           <p><strong>Name:</strong> {user.name}</p>
           <p><strong>Email:</strong> {user.email}</p>
+          <p><strong>Role:</strong> {user.role}</p>
         </div>
       ) : (
         !error && <p>Loading user info...</p>

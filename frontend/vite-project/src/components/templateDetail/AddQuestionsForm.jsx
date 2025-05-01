@@ -56,7 +56,7 @@ const AddQuestionForm = ({ templateId, setTemplate }) => {
 
 
   return (
-    <div className={darkToggle ? 'mt-8 border border-gray-800 bg-gray-800 p-4 rounded-md' : 'mt-8 border border-gray-400 bg-gray-400 p-4 rounded-md'}>
+    <div className={darkToggle ? 'mt-4 border border-gray-800 bg-gray-800 p-4 rounded-md' : 'mt-4 border border-gray-400 bg-gray-400 p-4 rounded-md'}>
       <h3 className='font-semibold text-lg'>Add Question to Template</h3>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {success && <p style={{ color: 'green' }}>{success}</p>}
@@ -69,7 +69,7 @@ const AddQuestionForm = ({ templateId, setTemplate }) => {
         </div>
         <div className='font-semibold my-2'>
           <label>Type:</label><br />
-          <select className='border rounded-md px-4 ml-2 mt-1 py-2' value={type} onChange={(e) => setType(e.target.value)}>
+          <select className='border border-gray-800 rounded-md px-4 mt-1 py-2' value={type} onChange={(e) => setType(e.target.value)}>
             <option className='text-black' value="SINGLE_LINE">Single Line</option>
             <option className='text-black' value="MULTI_LINE">Multi Line</option>
             <option className='text-black' value="INTEGER">Integer</option>

@@ -37,12 +37,7 @@ const Navbar = () => {
 
         <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/templates">Templates</Link> {/* Link to Templates page */}
         <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/createTemplate">Create template</Link> {/* Link to Templates page */}
-        {/* Role-based navigation */}
-        {user && user.role === 'admin' && (
-          <li>
-            <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/dashboard">Dashboard</Link> {/* Only visible to admin */}
-          </li>
-        )}
+        <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/dashboard">Dashboard</Link> {/* Only visible to admin */}
 
         {!user ? (
           <>
@@ -115,53 +110,12 @@ const Navbar = () => {
     </nav >
 
 
+    // {user && user.role === 'admin' && (
+    //   <li>
+    //     <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/dashboard">Dashboard</Link> {/* Only visible to admin */}
+    //   </li>
+    // )}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // <nav className={darkToggle ? "bg-gray-800 w-screen py-2 px-4" : "bg-gray-400 w-screen flex py-2 px-4"}>
-    //   <div className='hidden sm:flex'>
-
-    //     <Link className="navbar-brand" to="/">
-    //       <img className='h-8 w-auto' src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="" />
-    //     </Link>
-    //     <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/">Home</Link>
-    //     <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/templates">Templates</Link> {/* Link to Templates page */}
-    //     <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/createTemplate">Create template</Link> {/* Link to Templates page */}
-
-
-
-    //   </div>
-
-
-
-
-    //   <div className='sm:hidden flex ml-auto z-100'>
-    //     <Hamburger toggled={isHamburgerOpen} toggle={setHamburgerOpen} size={24} />
-    //   </div>
-
-
-    // </nav>
   );
 };
 

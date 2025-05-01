@@ -1,7 +1,10 @@
 import React from 'react';
+import { useAuth } from '../../context/useAuth'
 
 const AccessManager = ({ template, setTemplate, templateId }) => {
-  const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = import.meta.env.VITE_API_URL;
+    const { darkToggle } = useAuth();
+
 
     const handleAddUser = async (e) => {
         e.preventDefault();
@@ -46,13 +49,12 @@ const AccessManager = ({ template, setTemplate, templateId }) => {
     };
 
     return (
-        <div className="mt-6 border-t pt-4">
+        <div className={darkToggle ? 'mt-4 border border-gray-800 bg-gray-800 p-4 rounded-md' : 'mt-4 border border-gray-400 bg-gray-400 p-4 rounded-md'}>
             <h3 className="text-lg font-bold mb-2">Manage Access</h3>
             <form onSubmit={handleAddUser} className="flex gap-2 items-center mb-4">
-                <input type="email" name="email" placeholder="Enter user email" className="border px-3 py-1 rounded flex-grow" required />
+                <input type="email" name="email" placeholder="Enter user email" className="placeholder-gray-500 border border-gray-300 px-3 py-1 rounded bg-gray-50 flex-grow focus:ring-blue-500 focus:border-blue-500" required />
                 <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded">Allow User</button>
             </form>
-
             {template.allowedUsers?.length > 0 && (
                 <div>
                     <h4 className="font-semibold mb-1">Allowed Users:</h4>

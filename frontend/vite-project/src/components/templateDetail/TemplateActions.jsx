@@ -23,14 +23,12 @@ const TemplateActions = ({ isPublic, toggleVisibility, templateId, darkToggle })
 
   return (
     <div className={darkToggle
-      ? "mt-2 font-semibold border rounded-lg p-4 border-gray-800 shadow bg-gray-800"
-      : "mt-2 font-semibold border rounded-lg p-4 border-gray-400 shadow bg-gray-400"}>
+      ? "mt-8 font-semibold border rounded-lg p-4 border-gray-800 shadow bg-gray-800"
+      : "mt-8 font-semibold border rounded-lg p-4 border-gray-400 shadow bg-gray-400"}>
       <h1 className="font-semibold mb-2">Only author or admin can have these buttons</h1>
       <div className='flex space-x-2'>
-        <button onClick={toggleVisibility}
-          className={`font-semibold px-4 py-2 rounded-md transition text-white ${isPublic ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
-          Make {isPublic ? 'Private' : 'Public'}
-        </button>
+        <button className={`font-semibold px-4 py-2 rounded-md transition text-white ${isPublic ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+          onClick={toggleVisibility}> Make {isPublic ? 'Private' : 'Public'}</button>
         <button className="bg-red-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-red-700 transition" onClick={handleDeleteTemplate}>Delete Template</button>
       </div>
     </div>
