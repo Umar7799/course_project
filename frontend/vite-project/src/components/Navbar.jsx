@@ -24,9 +24,6 @@ const Navbar = () => {
     <nav id='navbar' className={darkToggle ? 'fixed w-full duration-500 bg-gray-800 rounded-b-md flex justify-between px-8 py-2 text-white bg-opacity-40 backdrop-blur-md rounded drop-shadow-lg shadow-md z-[100] top-0' : 'fixed w-full duration-500 bg-gray-400 rounded-b-md flex justify-between px-8 py-2 text-white bg-opacity-40 backdrop-blur-md rounded drop-shadow-lg shadow-md z-[100] top-0'}>
       <div className='hidden font-semibold sm:flex space-x-4 pt-2'>
 
-        <Link className="navbar-brand" to="/">
-          <img className='h-8 w-auto' src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="PIC" />
-        </Link>
         <Link className={darkToggle ? "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/">Home</Link>
         {user && user?.role === 'ADMIN' && (
           <Link className={darkToggle
@@ -65,11 +62,7 @@ const Navbar = () => {
       </div>
       <div className={isHamburgerOpen ? 'md:hidden absolute h-[100vh] w-[60vw] text-white bg-opacity-80 backdrop-blur-md drop-shadow-lg shadow-md top-0 duration-500 right-0' : 'hidden duration-500'}>
         <div className={darkToggle ? 'h-[100vh] space-y-5 bg-gray-800 text-[18px] font-semibold text-center pt-32' : 'h-[100vh] space-y-5 bg-gray-400 text-[18px] font-semibold text-center pt-32'}>
-          <div className='flex justify-center'>
-            <Link className="navbar-brand" to="/">
-              <img className='h-8 w-auto' src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="" />
-            </Link>
-          </div>
+         
           <div>
             <Link className={darkToggle ? "block rounded-md px-3 py-2 font-medium text-gray-300 hover:bg-gray-700 hover:text-white" : "block rounded-md px-3 py-2 font-medium text-gray-800 hover:bg-gray-500 hover:text-white"} to="/" onClick={() => { setHamburgerOpen(false) }}>Home</Link>
             {user && user?.role === 'ADMIN' && (
