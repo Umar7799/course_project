@@ -14,6 +14,8 @@ const templateRoutes = require('./routes/templates');
 const formRoutes = require("./routes/formRoutes");
 const questionRoutes = require("./routes/questionRoutes");
 const promoteUsers = require("./routes/promoteUsers");
+const { router: salesforceRouter } = require('./routes/salesforceRoutes');
+
 
 const app = express();
 
@@ -40,7 +42,7 @@ app.use(async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Database connection failed:", err);
-    return res.status(503).json({ 
+    return res.status(503).json({
       error: "Service unavailable",
       details: "Database connection failed"
     });
@@ -48,10 +50,10 @@ app.use(async (req, res, next) => {
 });
 
 app.use((req, res, next) => {
-    console.log(`[${req.method}] ${req.originalUrl}`);
-    next();
-  });
-  
+  console.log(`[${req.method}] ${req.originalUrl}`);
+  next();
+});
+
 
 
 // ====================== ROUTES ======================
@@ -60,13 +62,14 @@ app.use("/auth", templateRoutes);
 app.use("/auth", formRoutes);
 app.use("/auth", questionRoutes);
 app.use("/auth", promoteUsers);
+app.use('/auth', salesforceRouter); // ✅ This is now a function as expected
 
 
 
 // Add this new route 👇
 app.get("/", (req, res) => {
-    res.send("Backend is working! ✅");
-  });
+  res.send("Backend is working! ✅");
+});
 
 
 
@@ -77,7 +80,7 @@ if (process.env.NODE_ENV !== "production") {
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 } else {
   app.use("/uploads", (req, res) => {
-    res.status(403).json({ 
+    res.status(403).json({
       error: "Forbidden",
       message: "File uploads are disabled in production"
     });
@@ -87,7 +90,7 @@ if (process.env.NODE_ENV !== "production") {
 // ====================== ERROR HANDLING ======================
 // 404 Handler
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: "Endpoint not found",
     availableEndpoints: ["/auth"]
   });
@@ -96,7 +99,7 @@ app.use((req, res) => {
 // 500 Handler
 app.use((err, req, res, next) => {
   console.error("Server error:", err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     error: "Internal server error",
     ...(process.env.NODE_ENV === "development" && { stack: err.stack })
   });
@@ -117,4 +120,5 @@ process.on("SIGTERM", async () => {
     console.log("Server terminated");
   });
 });
+
 

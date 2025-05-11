@@ -1,6 +1,8 @@
 import React from 'react';
 
+
 const TemplateHeader = ({ title, description, images, likes, hasLiked, onLike }) => {
+  const API_URL = import.meta.env.VITE_API_URL;
 
   return (
     <div className='text-xl font-semibold mb-4'>
@@ -11,7 +13,7 @@ const TemplateHeader = ({ title, description, images, likes, hasLiked, onLike })
           <img
             key={index}
             className="w-fit max-w-xs my-2 shadow-lg"
-            src={image.startsWith('http') ? image : `http://localhost:5000${image}`}
+            src={image.startsWith('http') ? image : `${API_URL}${image}`}
             alt={title}
           />
         ))}

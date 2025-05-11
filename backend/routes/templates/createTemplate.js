@@ -165,7 +165,3 @@ router.delete('/templates/:id', authMiddleware('USER', 'ADMIN'), async (req, res
 
 
 module.exports = router;
-
-
-
-

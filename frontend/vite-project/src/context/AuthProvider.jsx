@@ -9,7 +9,7 @@ import { AuthContext } from './AuthContext';
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = import.meta.env.VITE_API_URL;
 
 
     const login = async (email, password) => {
@@ -85,6 +85,8 @@ export const AuthProvider = ({ children }) => {
     const toggleFunction = () => {
         setDarkToggle((prev) => !prev);
     };
+
+
 
     return (
         <AuthContext.Provider value={{ user, login, logout, darkToggle, toggleFunction }}>

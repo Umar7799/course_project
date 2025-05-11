@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../prisma/client');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/authMiddleware');
+const axios = require('axios');
+
 
 const router = Router();
 
@@ -144,5 +146,8 @@ router.put('/promote/:userId', authMiddleware('USER'), async (req, res) => {
         return res.status(500).json({ error: 'Something went wrong' });
     }
 });
+
+
+
 
 module.exports = router;

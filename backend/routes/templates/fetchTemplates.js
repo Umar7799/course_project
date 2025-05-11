@@ -153,7 +153,7 @@ router.get('/templates/:templateId/forms', authMiddleware('USER', 'ADMIN'), asyn
 
         // Get forms with answers
         const forms = await prisma.form.findMany({
-            where: { 
+            where: {
                 templateId: parseInt(templateId, 10),
                 answers: { some: {} }
             },
@@ -183,9 +183,9 @@ router.get('/templates/:templateId/forms', authMiddleware('USER', 'ADMIN'), asyn
         });
     } catch (error) {
         console.error('Error fetching template results:', error);
-        return res.status(500).json({ 
+        return res.status(500).json({
             error: 'Failed to load template results',
-            details: error.message 
+            details: error.message
         });
     }
 });
@@ -197,6 +197,8 @@ router.get('/templates/:id/full', authMiddleware('USER', 'ADMIN'), async (req, r
     const userRole = req.user.role;
 
     const templateId = parseInt(req.params.id, 10);
+
+    console.log(template.images)
 
     if (isNaN(templateId)) {
         return res.status(400).json({ error: 'Invalid template ID' });
