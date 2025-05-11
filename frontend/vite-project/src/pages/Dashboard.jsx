@@ -49,7 +49,7 @@ const Dashboard = () => {
     setSyncError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/auth/salesforce/sync', {
+      const response = await axios.post(`${API_URL}/auth/salesforce/sync`, {
         company,
         phone,
       }, {
