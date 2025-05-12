@@ -195,4 +195,12 @@ router.post("/salesforce/sync", authMiddleware(), async (req, res) => {
     }
 });
 
+
+// Check Salesforce connection status
+router.get("/salesforce/status", authMiddleware(), (req, res) => {
+    const isConnected = !!(salesforceAuth.accessToken && salesforceAuth.instanceUrl);
+    res.json({ connected: isConnected });
+});
+
+
 module.exports = { router, salesforceAuth };
