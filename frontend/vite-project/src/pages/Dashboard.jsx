@@ -1,17 +1,17 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const Dashboard = () => {
-  const [user, setUser] = useState(null); // Stores user profile
-  const [error, setError] = useState(null); // Error handling
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [showCRMForm, setShowCRMForm] = useState(false);
   const [company, setCompany] = useState('');
   const [phone, setPhone] = useState('');
   const [syncMessage, setSyncMessage] = useState('');
   const [syncError, setSyncError] = useState('');
+  const [salesforceConnected, setSalesforceConnected] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -40,7 +40,24 @@ const Dashboard = () => {
       }
     };
 
+    const checkSalesforceStatus = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/auth/salesforce/status`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setSalesforceConnected(response.data.connected === true);
+      } catch (err) {
+        console.warn('Salesforce status check failed or not connected.', err);
+        setSalesforceConnected(false);
+      }
+    };
+
     fetchProfile();
+    checkSalesforceStatus();
   }, [API_URL]);
 
   const handleCRMSync = async (e) => {
@@ -70,7 +87,10 @@ const Dashboard = () => {
         setSyncError('❌ Failed to sync with Salesforce. ' + (error.response?.data?.error || ''));
       }
     }
+  };
 
+  const handleConnectSalesforce = () => {
+    window.location.href = `${API_URL}/auth/salesforce/login`;
   };
 
   if (loading) {
@@ -89,15 +109,23 @@ const Dashboard = () => {
           <p><strong>Email:</strong> {user.email}</p>
           <p><strong>Role:</strong> {user.role}</p>
 
-          {(user.role === 'ADMIN' || user.id === user.id) && (  // Always true for now, but makes intention clear
+          {!salesforceConnected && (
+            <button
+              onClick={handleConnectSalesforce}
+              className="mt-4 bg-orange-500 text-white rounded-md px-4 py-2"
+            >
+              Connect to Salesforce
+            </button>
+          )}
+
+          {(user.role === 'ADMIN' || user.id === user.id) && (
             <button
               onClick={() => setShowCRMForm(!showCRMForm)}
-              className="mt-4 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-md px-3 py-1"
+              className="mt-4 ml-4 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-md px-3 py-1"
             >
               {showCRMForm ? "Hide CRM Form" : "Sync to Salesforce CRM"}
             </button>
           )}
-
 
           {showCRMForm && (
             <form onSubmit={handleCRMSync} className="mt-4 space-y-4 max-w-md">
