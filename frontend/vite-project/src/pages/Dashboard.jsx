@@ -90,8 +90,18 @@ const Dashboard = () => {
   };
 
   const handleConnectSalesforce = () => {
-    window.location.href = `${API_URL}/auth/salesforce/login`;
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.innerWidth - width) / 2;
+    const top = window.screenY + (window.innerHeight - height) / 2;
+  
+    window.open(
+      `${API_URL}/auth/salesforce/login`,
+      'SalesforceLogin',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
   };
+  
 
   if (loading) {
     return <div>Loading user profile...</div>;
